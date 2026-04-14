@@ -399,7 +399,7 @@ For async functions, use `#[tokio::test]`:
 ```rust
 #[tokio::test]
 async fn succeeds_with_valid_config() {
-    let result = fetch_balance("https://api.testnet.solana.com", &pubkey).await;
+    let result = fetch_data("https://api.example.com/endpoint", &key).await;
     assert!(result.is_ok());
 }
 ```
@@ -408,11 +408,11 @@ With rstest:
 
 ```rust
 #[rstest]
-#[case::devnet("https://api.devnet.solana.com")]
-#[case::testnet("https://api.testnet.solana.com")]
+#[case::staging("https://api.staging.example.com")]
+#[case::production("https://api.example.com")]
 #[tokio::test]
-async fn connects_to_cluster(#[case] rpc_url: &str) {
-    let result = connect(rpc_url).await;
+async fn connects_to_service(#[case] base_url: &str) {
+    let result = connect(base_url).await;
     assert!(result.is_ok());
 }
 ```
@@ -427,12 +427,12 @@ Use `temp-env` for tests that depend on environment variables:
 use temp_env::async_with_vars;
 
 #[tokio::test]
-async fn uses_rpc_url_from_env() {
+async fn uses_base_url_from_env() {
     temp_env::async_with_vars(
-        [("RPC_URL", Some("https://api.testnet.solana.com"))],
+        [("BASE_URL", Some("https://api.example.com"))],
         async {
             let config = Config::from_env();
-            assert_eq!(config.rpc_url, "https://api.testnet.solana.com");
+            assert_eq!(config.base_url, "https://api.example.com");
         },
     )
     .await;
