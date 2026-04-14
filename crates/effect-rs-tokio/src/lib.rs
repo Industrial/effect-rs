@@ -1,7 +1,7 @@
 //! Tokio integration for [`effect`]: [`TokioRuntime`] implements [`effect::Runtime`] with
 //! cooperative sleep/yield, and **runs forked effects** on Tokio’s **blocking thread pool** via
 //! [`tokio::runtime::Handle::spawn_blocking`] (the `Effect` interpreter is driven with
-//! [`run_blocking`](effect::run_blocking); it is not `Send` for [`tokio::spawn`]).
+//! [`run_blocking`]; it is not `Send` for [`tokio::spawn`]).
 //!
 //! Tower, Axum, and other Tokio-based adapters should depend on **`effect-tokio`** for this wiring.
 //!
