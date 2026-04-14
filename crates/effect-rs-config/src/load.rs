@@ -260,3 +260,196 @@ where
     A::from(list)
   })
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::config_env;
+  use crate::ConfigEnv;
+  use crate::MapConfigProvider;
+  use crate::ProviderOptions;
+  use ::effect::run_blocking;
+
+  fn env_map(pairs: &[(&str, &str)]) -> ConfigEnv {
+    config_env(MapConfigProvider::from_pairs(
+      pairs.iter().copied().map(|(k, v)| (k, v)),
+    ))
+  }
+
+  #[test]
+  fn nested_path_builds_segments() {
+    assert_eq!(
+      nested_path("SERVER", &["HOST", "PORT"]),
+      vec!["SERVER", "HOST", "PORT"]
+    );
+  }
+
+  #[test]
+  fn read_string_ok_and_missing() {
+    let v: String = run_blocking(
+      read_string::<String, ConfigError, _>(&["K"]),
+      env_map(&[("K", "hello")]),
+    )
+    .unwrap();
+    assert_eq!(v, "hello");
+
+    let err = run_blocking(read_string::<String, ConfigError, _>(&["MISSING"]), env_map(&[]))
+      .unwrap_err();
+    assert!(matches!(err, ConfigError::Missing { .. }));
+  }
+
+  #[test]
+  fn read_string_opt_some_and_none() {
+    let v: Option<String> = run_blocking(
+      read_string_opt::<Option<String>, ConfigError, _>(&["K"]),
+      env_map(&[("K", "x")]),
+    )
+    .unwrap();
+    assert_eq!(v, Some("x".into()));
+
+    let none: Option<String> = run_blocking(
+      read_string_opt::<Option<String>, ConfigError, _>(&["MISSING"]),
+      env_map(&[]),
+    )
+    .unwrap();
+    assert_eq!(none, None);
+  }
+
+  #[test]
+  fn read_number_ok_missing_invalid() {
+    let n: f64 = run_blocking(
+      read_number::<f64, ConfigError, _>(&["N"]),
+      env_map(&[("N", "3.5")]),
+    )
+    .unwrap();
+    assert!((n - 3.5).abs() < f64::EPSILON);
+
+    let err = run_blocking(read_number::<f64, ConfigError, _>(&["MISSING"]), env_map(&[]))
+      .unwrap_err();
+    assert!(matches!(err, ConfigError::Missing { .. }));
+
+    let err = run_blocking(
+      read_number::<f64, ConfigError, _>(&["N"]),
+      env_map(&[("N", "not-a-number")]),
+    )
+    .unwrap_err();
+    assert!(matches!(err, ConfigError::Invalid { .. }));
+  }
+
+  #[test]
+  fn read_i64_ok_missing_invalid() {
+    let n: i64 =
+      run_blocking(read_i64::<i64, ConfigError, _>(&["N"]), env_map(&[("N", "-42")])).unwrap();
+    assert_eq!(n, -42);
+
+    let err = run_blocking(read_i64::<i64, ConfigError, _>(&["MISSING"]), env_map(&[]))
+      .unwrap_err();
+    assert!(matches!(err, ConfigError::Missing { .. }));
+
+    let err = run_blocking(
+      read_i64::<i64, ConfigError, _>(&["N"]),
+      env_map(&[("N", "1.2")]),
+    )
+    .unwrap_err();
+    assert!(matches!(err, ConfigError::Invalid { .. }));
+  }
+
+  #[test]
+  fn read_bool_variants_and_invalid() {
+    for (raw, expected) in [
+      ("true", true),
+      ("TRUE", true),
+      ("1", true),
+      ("yes", true),
+      ("false", false),
+      ("0", false),
+      ("no", false),
+    ] {
+      let b: bool = run_blocking(
+        read_bool::<bool, ConfigError, _>(&["B"]),
+        env_map(&[("B", raw)]),
+      )
+      .unwrap();
+      assert_eq!(b, expected, "raw={raw}");
+    }
+
+    let err = run_blocking(read_bool::<bool, ConfigError, _>(&["MISSING"]), env_map(&[]))
+      .unwrap_err();
+    assert!(matches!(err, ConfigError::Missing { .. }));
+
+    let err = run_blocking(
+      read_bool::<bool, ConfigError, _>(&["B"]),
+      env_map(&[("B", "maybe")]),
+    )
+    .unwrap_err();
+    assert!(matches!(err, ConfigError::Invalid { .. }));
+  }
+
+  #[test]
+  fn read_string_list_splits_on_seq_delim() {
+    let mut m = std::collections::HashMap::new();
+    m.insert("TAGS".into(), "a, b ,c".into());
+    let p = MapConfigProvider::with_options(
+      m,
+      ProviderOptions {
+        path_delim: "_",
+        seq_delim: ",",
+      },
+    );
+    let env = config_env(p);
+    let tags: Vec<String> =
+      run_blocking(read_string_list::<Vec<String>, ConfigError, _>(&["TAGS"]), env).unwrap();
+    assert_eq!(tags, vec!["a", "b", "c"]);
+  }
+
+  #[test]
+  fn read_nested_string_and_list() {
+    let v: String = run_blocking(
+      read_nested_string::<String, ConfigError, _>("SERVER", &["HOST"]),
+      env_map(&[("SERVER_HOST", "z")]),
+    )
+    .unwrap();
+    assert_eq!(v, "z");
+
+    let list: Vec<String> = run_blocking(
+      read_nested_string_list::<Vec<String>, ConfigError, _>("APP", &["IDS"]),
+      env_map(&[("APP_IDS", "1,2")]),
+    )
+    .unwrap();
+    assert_eq!(list, vec!["1", "2"]);
+  }
+
+  #[test]
+  fn read_with_empty_path_is_invalid() {
+    let err = run_blocking(
+      read_string::<String, ConfigError, _>(&[]),
+      env_map(&[]),
+    )
+    .unwrap_err();
+    assert!(matches!(err, ConfigError::Invalid { .. }));
+  }
+
+  #[test]
+  fn with_default_replaces_only_missing() {
+    let def: String = run_blocking(
+      read_string::<String, ConfigError, _>(&["K"]).with_default("default".into()),
+      env_map(&[]),
+    )
+    .unwrap();
+    assert_eq!(def, "default");
+
+    let v: String = run_blocking(
+      read_string::<String, ConfigError, _>(&["K"]).with_default("default".into()),
+      env_map(&[("K", "real")]),
+    )
+    .unwrap();
+    assert_eq!(v, "real");
+
+    let err = run_blocking(
+      read_number::<f64, ConfigError, _>(&["N"]).with_default(0.0),
+      env_map(&[("N", "bad")]),
+    )
+    .unwrap_err();
+    assert!(matches!(err, ConfigError::Invalid { .. }));
+  }
+}

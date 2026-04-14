@@ -41,10 +41,33 @@ pub fn unknown_from_serde_json(value: Value) -> Unknown {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use serde_json::json;
 
   #[test]
   fn maps_float_to_f64_unknown() {
     let v = serde_json::json!(1.5);
     assert_eq!(unknown_from_serde_json(v), Unknown::F64(1.5));
+  }
+
+  #[test]
+  fn maps_json_scalars_and_structure() {
+    assert_eq!(unknown_from_serde_json(Value::Null), Unknown::Null);
+    assert_eq!(unknown_from_serde_json(json!(true)), Unknown::Bool(true));
+    assert_eq!(unknown_from_serde_json(json!(42)), Unknown::I64(42));
+    assert_eq!(
+      unknown_from_serde_json(json!(u64::MAX)),
+      Unknown::I64(i64::MAX)
+    );
+    assert_eq!(
+      unknown_from_serde_json(json!({"a": 1, "b": [null]})),
+      Unknown::Object(
+        [
+          ("a".into(), Unknown::I64(1)),
+          ("b".into(), Unknown::Array(vec![Unknown::Null])),
+        ]
+        .into_iter()
+        .collect(),
+      )
+    );
   }
 }

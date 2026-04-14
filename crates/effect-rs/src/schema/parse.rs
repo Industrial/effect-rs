@@ -915,4 +915,59 @@ mod tests {
       assert!(err.message.contains("10"));
     }
   }
+
+  mod more_combinators {
+    use super::*;
+
+    #[test]
+    fn i64_unknown_wire_round_trips_through_unknown() {
+      let s = i64_unknown_wire::<()>();
+      assert_eq!(s.decode_unknown(&Unknown::I64(7)).unwrap(), 7);
+      assert_eq!(s.encode(7), Unknown::I64(7));
+    }
+
+    #[test]
+    fn array_decodes_unknown_vector() {
+      let s = array(i64::<()>());
+      let u = Unknown::Array(vec![Unknown::I64(1), Unknown::I64(2)]);
+      assert_eq!(s.decode_unknown(&u).unwrap(), vec![1, 2]);
+      let wire = vec![3_i64, 4_i64];
+      assert_eq!(s.decode(wire.clone()).unwrap(), vec![3, 4]);
+      assert_eq!(s.encode(vec![3, 4]), wire);
+    }
+
+    #[test]
+    fn tuple2_decodes_unknown_array() {
+      let s = tuple(i64::<()>(), bool_::<()>());
+      let u = Unknown::Array(vec![Unknown::I64(1), Unknown::Bool(true)]);
+      assert_eq!(s.decode_unknown(&u).unwrap(), (1, true));
+    }
+
+    #[test]
+    fn filter_decode_unknown_checks_predicate() {
+      let s = filter(i64::<()>(), |n| *n == 7, "seven");
+      assert_eq!(s.decode_unknown(&Unknown::I64(7)).unwrap(), 7);
+      assert!(s.decode_unknown(&Unknown::I64(8)).is_err());
+    }
+
+    #[test]
+    fn transform_maps_decode_and_unknown() {
+      let s = transform(
+        i64::<()>(),
+        |n| Ok(n.to_string()),
+        |t| t.parse::<i64>().unwrap(),
+      );
+      assert_eq!(s.decode(5_i64).unwrap(), "5");
+      assert_eq!(s.decode_unknown(&Unknown::I64(9)).unwrap(), "9");
+    }
+
+    #[test]
+    fn union_uses_fallback_when_primary_rejects() {
+      let primary = filter(i64_unknown_wire::<()>(), |n| *n < 0, "negative only");
+      let fallback = i64_unknown_wire::<()>();
+      let s = union_(primary, fallback);
+      assert_eq!(s.decode_unknown(&Unknown::I64(-1)).unwrap(), -1);
+      assert_eq!(s.decode_unknown(&Unknown::I64(5)).unwrap(), 5);
+    }
+  }
 }

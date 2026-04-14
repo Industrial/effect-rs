@@ -705,4 +705,72 @@ mod tests {
     assert!(s.less_than(&u) || s.0 == u.0);
     let _ = n.to_epoch_millis();
   }
+
+  #[rstest::rstest]
+  #[case(TimeUnit::Week)]
+  #[case(TimeUnit::Month)]
+  #[case(TimeUnit::Year)]
+  fn utc_week_month_year_start_end_nearest(#[case] unit: TimeUnit) {
+    let u = UtcDateTime::unsafe_make(1_720_000_000_000);
+    let _ = u.start_of(unit);
+    let _ = u.end_of(unit);
+    let _ = u.nearest(unit);
+  }
+
+  #[test]
+  fn utc_from_std_unix_epoch() {
+    let u = UtcDateTime::from_std(std::time::UNIX_EPOCH).expect("epoch");
+    assert_eq!(u.to_epoch_millis(), 0);
+  }
+
+  #[test]
+  fn utc_civil_accessors_and_compare() {
+    let a = UtcDateTime::unsafe_make(1_700_000_000_000);
+    let b = UtcDateTime::unsafe_make(1_700_000_001_000);
+    assert!(a.year() >= 2023);
+    assert!((1..=12).contains(&a.month()));
+    assert!((1..=31).contains(&a.day()));
+    assert!(a.less_than(&b));
+    assert!(b.greater_than(&a));
+    assert!(b.between(&a, &b));
+    assert_eq!(a.distance_millis(&b), 1000);
+    assert!(a.distance_duration(&b) <= std::time::Duration::from_secs(2));
+    let _ = a.format("%Y");
+    let _ = a.format_iso();
+  }
+
+  #[test]
+  fn zoned_now_and_helpers() {
+    let Exit::Success(z) = run_test(ZonedDateTime::now(), ()) else {
+      panic!("expected success");
+    };
+    let _ = z.year();
+    let _ = z.format_iso();
+    let _ = z.format("%H");
+    let utc = UtcDateTime::unsafe_make(1_720_000_000_000);
+    let london = timezone::named("Europe/London");
+    let Exit::Success(tz) = run_test(london, ()) else {
+      panic!("zone");
+    };
+    let z2 = ZonedDateTime::from_epoch_millis(1_720_000_000_000, tz).expect("zoned");
+    assert_eq!(z2.to_epoch_millis(), 1_720_000_000_000);
+    let z3 = utc.to_zoned(z2.time_zone());
+    assert_eq!(z3.to_epoch_millis(), z2.to_epoch_millis());
+    let _ = z2.start_of(TimeUnit::Day);
+    let _ = z2.end_of(TimeUnit::Hour);
+    let _ = z2.nearest(TimeUnit::Week);
+  }
+
+  #[test]
+  fn timezone_helpers_parse_offsets() {
+    assert!(timezone::utc() == TimeZone::UTC);
+    let o = timezone::offset(90);
+    let z = ZonedDateTime::unsafe_make(0, o);
+    assert_eq!(z.to_epoch_millis(), 0);
+    assert!(timezone::from_str("Europe/London").is_some());
+    assert!(timezone::from_str("+01:00").is_some());
+    assert!(timezone::from_str("-05:30").is_some());
+    assert!(timezone::from_str("  ").is_none());
+    assert!(timezone::from_str("not-a-zone-or-offset").is_none());
+  }
 }

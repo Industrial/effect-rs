@@ -577,4 +577,36 @@ port = 3000
       assert_eq!(config::integer(&p, key).unwrap(), 42);
     });
   }
+
+  #[test]
+  fn scoped_provider_prefix_segments_and_nested_lookup() {
+    let p = MapConfigProvider::from_pairs([("A_B_C_D", "nested")]);
+    let scoped = ScopedConfigProvider::new(p, "A.B");
+    assert_eq!(scoped.prefix_segments(), &["A", "B"]);
+    assert_eq!(
+      config::nested_string(&scoped, "C", "D").unwrap(),
+      "nested"
+    );
+    assert_eq!(config::string(scoped.inner(), "A_B_C_D").unwrap(), "nested");
+  }
+
+  #[test]
+  fn figment_bool_float_and_non_scalar_error() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let path = dir.path().join("mix.toml");
+    std::fs::write(
+      &path,
+      r#"
+flag = true
+pi = 2.5
+bad = [1, 2]
+"#,
+    )
+    .expect("write");
+    let fig = figment::from_toml_file(&path);
+    let p = FigmentConfigProvider::new(fig);
+    assert!(config::boolean(&p, "flag").unwrap());
+    assert!((config::number(&p, "pi").unwrap() - 2.5).abs() < f64::EPSILON);
+    assert!(config::string(&p, "bad").is_err());
+  }
 }

@@ -990,4 +990,25 @@ mod tests {
       Err(Or::Right("upstream"))
     );
   }
+
+  #[test]
+  fn queue_channel_maps_input_and_drains_after_shutdown() {
+    let q = block_on_effect(Queue::<i32>::unbounded()).expect("q");
+    let qc = QueueChannel::from_queue_and_map(q, |x: i32| x * 10);
+    block_on_effect(qc.write(2)).expect("write");
+    assert_eq!(block_on_effect(qc.read()).unwrap(), Some(20));
+    block_on_effect(qc.shutdown()).expect("shutdown");
+    assert_eq!(block_on_effect(qc.read()).unwrap(), None);
+  }
+
+  #[test]
+  fn queue_channel_duplex_to_stream_collects() {
+    let qc = block_on_effect(QueueChannel::<i32, i32, ()>::duplex_unbounded()).expect("qc");
+    block_on_effect(qc.write(1)).expect("w");
+    block_on_effect(qc.write(2)).expect("w");
+    block_on_effect(qc.shutdown()).expect("shutdown");
+    let stream = qc.to_stream();
+    let got = block_on_effect(stream.run_collect()).expect("collect");
+    assert_eq!(got, vec![1, 2]);
+  }
 }

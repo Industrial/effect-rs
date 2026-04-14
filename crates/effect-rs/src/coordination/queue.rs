@@ -667,4 +667,51 @@ mod tests {
     h.join().unwrap();
     assert!(drive(q.is_shutdown(), ()).unwrap());
   }
+
+  #[test]
+  fn queue_offer_all_retains_overflow_bounded() {
+    let q = drive(Queue::<u32>::bounded(2), ()).unwrap();
+    let left = drive(q.offer_all([1u32, 2, 3, 4]), ()).unwrap();
+    assert_eq!(left, vec![3, 4]);
+    let chunk = drive(q.take_all(), ()).unwrap();
+    assert_eq!(chunk.into_vec(), vec![1, 2]);
+  }
+
+  #[test]
+  fn queue_take_up_to_and_take_n() {
+    let q = drive(Queue::<u32>::bounded(10), ()).unwrap();
+    drive(q.offer_all([1u32, 2, 3]), ()).unwrap();
+    let c = drive(q.take_up_to(2), ()).unwrap();
+    assert_eq!(c.into_vec(), vec![1, 2]);
+    drive(q.offer_all([4u32, 5]), ()).unwrap();
+    let c2 = drive(q.take_n(2), ()).unwrap();
+    assert_eq!(c2.into_vec(), vec![3, 4]);
+  }
+
+  #[test]
+  fn queue_take_between_min_max_and_edges() {
+    let q = drive(Queue::<u32>::unbounded(), ()).unwrap();
+    assert_eq!(drive(q.take_between(2, 1), ()).unwrap().len(), 0);
+    assert_eq!(drive(q.take_between(0, 0), ()).unwrap().len(), 0);
+    drive(q.offer_all([10u32, 11, 12]), ()).unwrap();
+    let c = drive(q.take_between(2, 3), ()).unwrap();
+    assert_eq!(c.len(), 3);
+  }
+
+  #[test]
+  fn queue_poll_and_is_empty_is_full() {
+    let q = drive(Queue::<u32>::bounded(1), ()).unwrap();
+    assert_eq!(drive(q.poll(), ()).unwrap(), None);
+    assert!(drive(q.is_empty(), ()).unwrap());
+    drive(q.offer(7u32), ()).unwrap();
+    assert!(drive(q.is_full(), ()).unwrap());
+    assert_eq!(drive(q.poll(), ()).unwrap(), Some(7));
+  }
+
+  #[test]
+  fn queue_sliding_is_full_after_capacity() {
+    let q = drive(Queue::<u32>::sliding(2), ()).unwrap();
+    drive(q.offer_all([1u32, 2, 3]), ()).unwrap();
+    assert!(drive(q.is_full(), ()).unwrap());
+  }
 }

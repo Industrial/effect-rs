@@ -325,3 +325,132 @@ where
     }
   })
 }
+
+#[cfg(test)]
+mod tests {
+  use std::convert::Infallible;
+
+  use axum::body::Body;
+  use axum::http::{Method, Request, StatusCode};
+  use axum::routing::{MethodFilter, Router};
+  use effect::duration::Duration;
+  use effect::{fail, succeed, Effect, Metric};
+  use tower::ServiceExt;
+
+  use super::*;
+
+  #[derive(Clone)]
+  struct AppState(());
+
+  fn ok(_: &mut AppState) -> Effect<&'static str, Infallible, AppState> {
+    succeed("ok")
+  }
+
+  fn fail_handler(_: &mut AppState) -> Effect<(), (StatusCode, &'static str), AppState> {
+    fail((StatusCode::INTERNAL_SERVER_ERROR, "nope"))
+  }
+
+  #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+  async fn get_post_put_patch_delete_and_error_paths() {
+    let app = Router::new()
+      .route("/g", get(ok))
+      .route("/p", post(ok))
+      .route("/u", put(ok))
+      .route("/a", patch(ok))
+      .route("/d", delete(ok))
+      .route("/e", get(fail_handler))
+      .with_state(AppState(()));
+
+    for (method, path) in [
+      (Method::GET, "/g"),
+      (Method::POST, "/p"),
+      (Method::PUT, "/u"),
+      (Method::PATCH, "/a"),
+      (Method::DELETE, "/d"),
+    ] {
+      let res = app
+        .clone()
+        .oneshot(
+          Request::builder()
+            .method(method)
+            .uri(path)
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+      assert_eq!(res.status(), StatusCode::OK);
+    }
+
+    let res = app
+      .oneshot(
+        Request::builder()
+          .uri("/e")
+          .body(Body::empty())
+          .unwrap(),
+      )
+      .await
+      .unwrap();
+    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
+  }
+
+  #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+  async fn on_and_metrics_variants_execute() {
+    let ctr = Metric::counter("c", []);
+    let lat = Metric::<Duration, ()>::histogram("h", []);
+    let app = Router::new()
+      .route("/gm", get_with_metrics(ctr.clone(), lat.clone(), ok))
+      .route("/pm", post_with_metrics(ctr.clone(), lat.clone(), ok))
+      .route("/um", put_with_metrics(ctr.clone(), lat.clone(), ok))
+      .route("/am", patch_with_metrics(ctr.clone(), lat.clone(), ok))
+      .route("/dm", delete_with_metrics(ctr.clone(), lat.clone(), ok))
+      .route("/o", on(MethodFilter::OPTIONS, ok))
+      .with_state(AppState(()));
+
+    for (method, path) in [
+      (Method::GET, "/gm"),
+      (Method::POST, "/pm"),
+      (Method::PUT, "/um"),
+      (Method::PATCH, "/am"),
+      (Method::DELETE, "/dm"),
+    ] {
+      let _ = app
+        .clone()
+        .oneshot(
+          Request::builder()
+            .method(method)
+            .uri(path)
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    }
+
+    let _ = app
+      .clone()
+      .oneshot(
+        Request::builder()
+          .method(Method::OPTIONS)
+          .uri("/o")
+          .body(Body::empty())
+          .unwrap(),
+      )
+      .await
+      .unwrap();
+
+    let app2 = Router::new()
+      .route("/h", on_with_metrics(MethodFilter::HEAD, ctr, lat, ok))
+      .with_state(AppState(()));
+    let _ = app2
+      .oneshot(
+        Request::builder()
+          .method(Method::HEAD)
+          .uri("/h")
+          .body(Body::empty())
+          .unwrap(),
+      )
+      .await
+      .unwrap();
+  }
+}
