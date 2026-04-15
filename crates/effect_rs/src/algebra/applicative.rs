@@ -597,6 +597,14 @@ mod tests {
       let result = fa.ap(ff);
       assert_eq!(result, Err("e"));
     }
+
+    #[test]
+    fn result_trait_ap_ff_err_returns_ff_err() {
+      let fa: Result<i32, &str> = Ok(5);
+      let ff: Result<fn(i32) -> i32, &str> = Err("ff-err");
+      let result = fa.ap(ff);
+      assert_eq!(result, Err("ff-err"));
+    }
   }
 
   mod laws {

@@ -330,5 +330,12 @@ mod tests {
         (manual.value.increment)(10)
       );
     }
+
+    #[test]
+    fn get_interface_returns_interface_from_context() {
+      let ctx = single_context(counter_add1);
+      let counter: &Counter = ctx.get_interface();
+      assert_eq!((counter.increment)(10), 11);
+    }
   }
 }

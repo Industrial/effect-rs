@@ -79,3 +79,30 @@ impl Future for Notified<'_> {
     Poll::Pending
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn default_creates_empty_notify() {
+    let n = AsyncNotify::default();
+    // notify_waiters on empty list is a no-op
+    n.notify_waiters();
+  }
+
+  #[tokio::test]
+  async fn notified_completes_after_notify_waiters() {
+    let n = AsyncNotify::new();
+    // Spawn a task that waits on notified()
+    let n2 = std::sync::Arc::new(n);
+    let n3 = n2.clone();
+    let handle = tokio::spawn(async move {
+      n3.notified().await;
+    });
+    // Give the task a chance to register
+    tokio::task::yield_now().await;
+    n2.notify_waiters();
+    handle.await.expect("notified task should complete");
+  }
+}

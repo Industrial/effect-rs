@@ -525,4 +525,98 @@ mod tests {
       assert_eq!(result, Ok("replaced"));
     }
   }
+
+  mod result_module_fns {
+    use super::*;
+
+    #[test]
+    fn result_map_ok() {
+      assert_eq!(result::map(Ok::<i32, &str>(5), |x| x * 2), Ok(10));
+    }
+
+    #[test]
+    fn result_map_err_passes_through() {
+      assert_eq!(result::map(Err::<i32, &str>("e"), |x| x * 2), Err("e"));
+    }
+
+    #[test]
+    fn result_as_ok() {
+      assert_eq!(result::as_(Ok::<i32, &str>(5), "c"), Ok("c"));
+    }
+
+    #[test]
+    fn result_void_ok() {
+      assert_eq!(result::void(Ok::<i32, &str>(5)), Ok(()));
+    }
+
+    #[test]
+    fn result_void_err() {
+      assert_eq!(result::void(Err::<i32, &str>("e")), Err("e"));
+    }
+  }
+
+  mod vec_module_fns {
+    use super::*;
+
+    #[test]
+    fn vec_map_transforms_each() {
+      assert_eq!(vec::map(vec![1_i32, 2, 3], |x| x * 2), vec![2, 4, 6]);
+    }
+
+    #[test]
+    fn vec_as_replaces_all() {
+      assert_eq!(vec::as_(vec![1_i32, 2, 3], 0_i32), vec![0, 0, 0]);
+    }
+
+    #[test]
+    fn vec_void_discards_values() {
+      assert_eq!(vec::void(vec![1_i32, 2, 3]), vec![(), (), ()]);
+    }
+  }
+
+  mod option_module_fns {
+    use super::*;
+
+    #[test]
+    fn option_map_some() {
+      assert_eq!(option::map(Some(3_i32), |x| x * 2), Some(6));
+    }
+
+    #[test]
+    fn option_map_none() {
+      assert_eq!(option::map(None::<i32>, |x| x * 2), None);
+    }
+
+    #[test]
+    fn option_as_some() {
+      assert_eq!(option::as_(Some(3_i32), "replaced"), Some("replaced"));
+    }
+
+    #[test]
+    fn option_as_none() {
+      assert_eq!(option::as_(None::<i32>, "replaced"), None);
+    }
+
+    #[test]
+    fn option_void_some() {
+      assert_eq!(option::void(Some(42_i32)), Some(()));
+    }
+
+    #[test]
+    fn option_void_none() {
+      assert_eq!(option::void(None::<i32>), None);
+    }
+
+    #[test]
+    fn option_tap_some() {
+      let result = option::tap(Some(5_i32), |x| x * 3);
+      assert_eq!(result, Some((5, 15)));
+    }
+
+    #[test]
+    fn option_tap_none() {
+      let result: Option<(i32, i32)> = option::tap(None::<i32>, |x| x * 3);
+      assert_eq!(result, None);
+    }
+  }
 }

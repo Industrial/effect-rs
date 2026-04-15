@@ -443,4 +443,81 @@ mod tests {
     let out = String::from_utf8(arc.lock().unwrap().clone()).unwrap();
     assert!(out.contains("spn"), "output: {out}");
   }
+
+  #[test]
+  fn json_backend_write_error_returns_sink_error() {
+    use std::io::{self, Write};
+    struct FailWriter;
+    impl Write for FailWriter {
+      fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+        Err(io::Error::new(io::ErrorKind::BrokenPipe, "test write fail"))
+      }
+      fn flush(&mut self) -> io::Result<()> {
+        Err(io::Error::new(io::ErrorKind::BrokenPipe, "test flush fail"))
+      }
+    }
+    let backend = JsonLogBackend::new(FailWriter);
+    let rec = make_record(crate::LogLevel::Info, "write fails");
+    let result = backend.emit(&rec);
+    assert!(result.is_err(), "expected error, got Ok");
+    assert!(result.unwrap_err().to_string().contains("test write fail"));
+  }
+
+  #[test]
+  fn json_backend_newline_write_error_returns_sink_error() {
+    use std::io::{self, Write};
+    // Succeeds for non-newline writes, fails on the trailing newline
+    struct NoNewlineWriter;
+    impl Write for NoNewlineWriter {
+      fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if buf == b"\n" {
+          Err(io::Error::new(io::ErrorKind::BrokenPipe, "newline fail"))
+        } else {
+          Ok(buf.len())
+        }
+      }
+      fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        if buf == b"\n" {
+          Err(io::Error::new(io::ErrorKind::BrokenPipe, "newline fail"))
+        } else {
+          Ok(())
+        }
+      }
+      fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+      }
+    }
+    let backend = JsonLogBackend::new(NoNewlineWriter);
+    let rec = make_record(crate::LogLevel::Info, "newline fails");
+    let result = backend.emit(&rec);
+    assert!(result.is_err(), "expected error on newline write");
+  }
+
+  #[test]
+  fn structured_backend_write_error_returns_sink_error() {
+    use std::io::{self, Write};
+    struct FailWriter;
+    impl Write for FailWriter {
+      fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+        Err(io::Error::new(
+          io::ErrorKind::BrokenPipe,
+          "structured write fail",
+        ))
+      }
+      fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+      }
+    }
+    let backend = StructuredLogBackend::new(FailWriter);
+    let rec = make_record(crate::LogLevel::Warn, "write fails");
+    let result = backend.emit(&rec);
+    assert!(result.is_err(), "expected error, got Ok");
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("structured write fail"),
+      "unexpected error message"
+    );
+  }
 }

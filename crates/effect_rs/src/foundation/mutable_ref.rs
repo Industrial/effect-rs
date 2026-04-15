@@ -136,4 +136,46 @@ mod tests {
     assert_eq!(r.get_and_set("b".into()), "a");
     assert_eq!(r.get(), "b");
   }
+
+  #[test]
+  fn mutable_ref_set_replaces_value() {
+    let r = MutableRef::make(0_i32);
+    r.set(42);
+    assert_eq!(r.get(), 42);
+  }
+
+  #[test]
+  fn mutable_ref_update_mutates_in_place() {
+    let r = MutableRef::make(vec![1_i32]);
+    r.update(|v| v.push(2));
+    assert_eq!(r.get(), vec![1, 2]);
+  }
+
+  #[test]
+  fn mutable_ref_update_and_get_returns_new() {
+    let r = MutableRef::make(10_i32);
+    let new_val = r.update_and_get(|v| *v += 5);
+    assert_eq!(new_val, 15);
+    assert_eq!(r.get(), 15);
+  }
+
+  #[test]
+  fn mutable_ref_get_and_update_returns_old() {
+    let r = MutableRef::make(10_i32);
+    let old_val = r.get_and_update(|v| *v += 5);
+    assert_eq!(old_val, 10);
+    assert_eq!(r.get(), 15);
+  }
+
+  #[test]
+  fn mutable_ref_modify_returns_custom_value() {
+    let r = MutableRef::make(7_i32);
+    let result = r.modify(|v| {
+      let prev = *v;
+      *v = 0;
+      prev * 2
+    });
+    assert_eq!(result, 14);
+    assert_eq!(r.get(), 0);
+  }
 }

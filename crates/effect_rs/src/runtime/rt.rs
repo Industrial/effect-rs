@@ -225,6 +225,13 @@ mod tests {
       assert_eq!(pollster::block_on(h.join()), Err(Cause::Fail("nope")));
       assert_eq!(h.status(), FiberStatus::Failed);
     }
+
+    #[test]
+    fn thread_sleep_runtime_now_returns_valid_instant() {
+      let rt = ThreadSleepRuntime;
+      let t = rt.now();
+      assert!(t.elapsed().as_secs() < 5, "should be very recent");
+    }
   }
 
   mod run_fork {

@@ -740,6 +740,33 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn send_pooled_fetches_response() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+      .and(path("/pooled"))
+      .respond_with(ResponseTemplate::new(200).set_body_string("pooled-ok"))
+      .mount(&server)
+      .await;
+
+    let url = format!("{}/pooled", server.uri());
+    let pool = run_blocking(
+      Pool::make_with_ttl(1, Duration::from_secs(60), || {
+        succeed::<PooledClient, Never, ()>(PooledClient(Arc::new(Client::new())))
+      }),
+      (),
+    )
+    .expect("pool");
+    let env = service_env::<ReqwestPoolKey, _>(pool);
+    let resp = run_async(
+      send_pooled::<Response, Error, _, _>(move |c| c.get(url)),
+      env,
+    )
+    .await
+    .unwrap();
+    assert_eq!(resp.status().as_u16(), 200);
+  }
+
+  #[tokio::test]
   async fn json_schema_error_bad_json_returns_json_variant() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))

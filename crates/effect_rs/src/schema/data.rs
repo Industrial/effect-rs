@@ -153,4 +153,15 @@ mod tests {
     assert_eq!(row._tag, "TaggedRow");
     assert_eq!(crate::HasTag::tag(&row), "TaggedRow");
   }
+
+  #[test]
+  fn data_tuple_hash_is_consistent() {
+    let a = DataTuple((1_u32, 2_u32));
+    let b = DataTuple((1_u32, 2_u32));
+    let mut h1 = std::collections::hash_map::DefaultHasher::new();
+    let mut h2 = std::collections::hash_map::DefaultHasher::new();
+    a.hash(&mut h1);
+    b.hash(&mut h2);
+    assert_eq!(h1.finish(), h2.finish());
+  }
 }

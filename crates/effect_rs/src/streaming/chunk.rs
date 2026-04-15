@@ -263,6 +263,13 @@ mod tests {
       let b = Chunk::from_vec(vec![1i64, 2, 3]);
       assert_eq!(a.compare_by(&b, &order::number_i64()), Ordering::Greater);
     }
+
+    #[test]
+    fn compare_by_equal_length_equal_elements_are_equal() {
+      let a = Chunk::from_vec(vec![1i64, 2, 3]);
+      let b = Chunk::from_vec(vec![1i64, 2, 3]);
+      assert_eq!(a.compare_by(&b, &order::number_i64()), Ordering::Equal);
+    }
   }
 
   mod effect_hash {

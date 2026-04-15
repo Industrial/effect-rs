@@ -733,6 +733,31 @@ mod tests {
 
   // ========== effect_logger_level_methods ==========
 
+  mod no_tls_paths {
+    use super::*;
+    use ::effect_rs::run_blocking;
+
+    #[test]
+    fn annotate_logs_without_tls_still_runs_inner() {
+      crate::test_clear_all_logger_tls();
+      let result = run_blocking(
+        annotate_logs("k", "v", effect_rs::succeed::<i32, (), ()>(42)),
+        (),
+      );
+      assert_eq!(result, Ok(42));
+    }
+
+    #[test]
+    fn with_log_span_without_tls_still_runs_inner() {
+      crate::test_clear_all_logger_tls();
+      let result = run_blocking(
+        with_log_span("span", effect_rs::succeed::<i32, (), ()>(99)),
+        (),
+      );
+      assert_eq!(result, Ok(99));
+    }
+  }
+
   mod effect_logger_level_methods {
     use super::*;
 
@@ -785,6 +810,21 @@ mod tests {
       assert_eq!(
         run_blocking(EffectLogger.info::<()>(format!("n={n}")), ()),
         Ok(()),
+      );
+    }
+
+    #[test]
+    fn fatal_delegates_to_log_at_fatal_level() {
+      init_subscriber();
+      assert_eq!(run_blocking(EffectLogger.fatal::<()>("f"), ()), Ok(()));
+    }
+
+    #[test]
+    fn log_none_level_returns_ok_without_side_effects() {
+      init_subscriber();
+      assert_eq!(
+        run_blocking(EffectLogger.log::<()>(LogLevel::None, "silenced"), ()),
+        Ok(())
       );
     }
   }

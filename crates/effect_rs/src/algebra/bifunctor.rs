@@ -298,6 +298,16 @@ mod tests {
       assert_eq!(tuple::swap((1, "hello")), ("hello", 1));
     }
 
+    #[test]
+    fn map_first_transforms_first_component() {
+      assert_eq!(tuple::map_first((5, "hi"), |x| x * 2), (10, "hi"));
+    }
+
+    #[test]
+    fn map_second_transforms_second_component() {
+      assert_eq!(tuple::map_second((5, "hi"), |s| s.len()), (5, 2));
+    }
+
     #[rstest]
     #[case::ints((1, 2), (2, 1))]
     #[case::same_type((5, 5), (5, 5))]
@@ -332,6 +342,32 @@ mod tests {
     #[test]
     fn swap_err_to_ok() {
       assert_eq!(result::swap(Err::<i32, &str>("e")), Ok("e"));
+    }
+
+    #[test]
+    fn map_first_on_ok() {
+      assert_eq!(result::map_first(Ok::<i32, &str>(3), |x| x + 1), Ok(4));
+    }
+
+    #[test]
+    fn map_first_on_err_is_noop() {
+      assert_eq!(
+        result::map_first(Err::<i32, &str>("e"), |x| x + 1),
+        Err("e")
+      );
+    }
+
+    #[test]
+    fn map_second_on_err() {
+      assert_eq!(
+        result::map_second(Err::<i32, &str>("e"), |e| e.len()),
+        Err(1)
+      );
+    }
+
+    #[test]
+    fn map_second_on_ok_is_noop() {
+      assert_eq!(result::map_second(Ok::<i32, &str>(5), |e| e.len()), Ok(5));
     }
   }
 

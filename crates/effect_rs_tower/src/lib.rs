@@ -491,4 +491,25 @@ mod tests {
       .expect("ready should complete after slow call finishes")
       .unwrap();
   }
+
+  #[tokio::test(flavor = "current_thread")]
+  async fn tower_error_metric_increments_on_failure() {
+    let timer = Metric::timer("tower_req_fail", std::iter::empty());
+    let errors = Metric::counter("tower_err_fail", std::iter::empty());
+    let mut svc = EffectService::new((), |_env: &mut (), _x: u32| {
+      effect_rs::fail::<u32, &str, ()>("oops")
+    })
+    .with_request_metrics(timer.clone(), errors.clone());
+
+    let _ = svc.ready().await.unwrap().call(0).await;
+    assert_eq!(errors.snapshot_count(), 1);
+    assert_eq!(timer.snapshot_durations().len(), 1);
+  }
+
+  #[tokio::test(flavor = "current_thread")]
+  async fn in_flight_counter_none_when_no_limit() {
+    let svc: EffectService<(), _, u32> =
+      EffectService::new((), |_env: &mut (), x: u32| succeed::<u32, (), ()>(x));
+    assert!(svc.in_flight_counter().is_none());
+  }
 }

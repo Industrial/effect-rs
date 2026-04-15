@@ -119,4 +119,13 @@ mod tests {
     assert!(run_async(l.is_open(), ()).await.unwrap());
     run_async(l.wait(), ()).await.unwrap();
   }
+
+  #[tokio::test]
+  async fn free_functions_work_same_as_methods() {
+    let l = crate::runtime::run_blocking(make(), ()).unwrap();
+    assert!(!run_async(is_open(&l), ()).await.unwrap());
+    run_async(open(&l), ()).await.unwrap();
+    assert!(run_async(is_open(&l), ()).await.unwrap());
+    run_async(wait(&l), ()).await.unwrap(); // already open, returns immediately
+  }
 }

@@ -334,5 +334,46 @@ mod tests {
       );
       assert_eq!(result, Err("handler failed"));
     }
+
+    #[test]
+    fn branch_propagates_error_from_fab() {
+      let result: Result<i32, &str> = run_blocking(
+        branch_effect(
+          fail::<Either<i32, i32>, &str, ()>("fab failed"),
+          succeed(|a: i32| a),
+          succeed(|b: i32| b),
+        ),
+        (),
+      );
+      assert_eq!(result, Err("fab failed"));
+    }
+  }
+
+  mod select_error_propagation {
+    use super::*;
+
+    #[test]
+    fn select_propagates_error_from_fab() {
+      let result: Result<i32, &str> = run_blocking(
+        select_effect(
+          fail::<Either<i32, i32>, &str, ()>("fab failed"),
+          succeed(|_: i32| 0),
+        ),
+        (),
+      );
+      assert_eq!(result, Err("fab failed"));
+    }
+
+    #[test]
+    fn select_propagates_error_from_ff() {
+      let result: Result<i32, &str> = run_blocking(
+        select_effect(
+          succeed::<Either<i32, i32>, &str, ()>(Err(5)),
+          fail::<fn(i32) -> i32, &str, ()>("ff failed"),
+        ),
+        (),
+      );
+      assert_eq!(result, Err("ff failed"));
+    }
   }
 }

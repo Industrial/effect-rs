@@ -57,4 +57,10 @@ mod tests {
     assert!(s.contains("a: bad a"));
     assert!(s.contains("b: bad b"));
   }
+
+  #[test]
+  fn display_empty_path_omits_path_prefix() {
+    let e = ParseErrors::one(ParseError::new("", "bare error"));
+    assert_eq!(e.to_string(), "bare error");
+  }
 }

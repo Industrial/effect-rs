@@ -153,6 +153,14 @@ mod tests {
     }
 
     #[test]
+    fn default_creates_non_cancelled_token() {
+      let token = CancellationToken::default();
+      assert!(!token.is_cancelled());
+      assert!(token.cancel());
+      assert!(token.is_cancelled());
+    }
+
+    #[test]
     fn child_token_when_parent_already_cancelled_is_immediately_cancelled() {
       let parent = CancellationToken::new();
       parent.cancel();
