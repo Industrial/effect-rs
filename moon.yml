@@ -105,6 +105,8 @@ tasks:
     description: 'Build Rust API documentation with cargo doc'
     command: 'cargo'
     args: ['doc', '--no-deps', '--all-features']
+    env:
+      RUSTDOCFLAGS: '-D warnings'
     inputs:
       - 'Cargo.toml'
       - 'Cargo.lock'

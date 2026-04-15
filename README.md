@@ -21,6 +21,14 @@ If you have written async Rust—`Future`s, `Pin`, long `.await?` chains—and w
 [![Edition](https://img.shields.io/badge/edition-2024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/)
 [![GitHub Stars](https://img.shields.io/github/stars/Industrial/id_effect?style=social)](https://github.com/Industrial/id_effect/stargazers)
 
+### Start with the book
+
+**[Typed Effects in Rust](https://industrial.github.io/effect-rs/)** is the main way to learn **id_effect**: it walks the same story as the library—from `Effect<A, E, R>` and the `effect!` macro, through context, layers, and services, to concurrency, resources, STM, streams, schema, and testing. The API docs answer “what does this type do?”; the book answers “how do I think in effects?” and ties the pieces together.
+
+- **Read online:** [Typed Effects in Rust](https://industrial.github.io/effect-rs/) (GitHub Pages)
+- **Terminology:** [Glossary](https://industrial.github.io/effect-rs/appendix-c-glossary.html) — quick definitions for `Effect`, `Cause`, `Layer`, `Fiber`, `Stm`, and the rest of the vocabulary
+- **Source:** [`crates/id_effect/book/`](crates/id_effect/book/) (build locally with `moon run :book`)
+
 ---
 
 ## Overview
@@ -33,7 +41,7 @@ If you have written async Rust—`Future`s, `Pin`, long `.await?` chains—and w
 - **Streams, STM, schema** — pull-based streams, software transactional memory, and structural validation for larger systems.
 - **No bundled async executor** — the core stays portable; Tokio and other runtimes live in separate integration crates (see below).
 
-The long-form guide is the mdBook [**Typed Effects in Rust**](https://industrial.github.io/id_effect/) in [`crates/id_effect/book/`](crates/id_effect/book/). It follows the same arc as the library: foundations, environment and dependencies, production concerns (errors, concurrency, resources, scheduling), then advanced topics (STM, streams, schema, testing).
+For depth beyond this README, use the mdBook [**Typed Effects in Rust**](https://industrial.github.io/effect-rs/) (see **Start with the book** above). It follows the same arc as the library: foundations, environment and dependencies, production concerns (errors, concurrency, resources, scheduling), then advanced topics (STM, streams, schema, testing).
 
 ---
 
@@ -75,7 +83,7 @@ fn main() {
 }
 ```
 
-For a guided path through the API, use the numbered examples under [`crates/id_effect/examples/`](crates/id_effect/examples/) and the mdBook linked below.
+For a guided path through the API, read [**Typed Effects in Rust**](https://industrial.github.io/effect-rs/) first, then use the numbered examples under [`crates/id_effect/examples/`](crates/id_effect/examples/) and [docs.rs](https://docs.rs/id_effect).
 
 ---
 
@@ -83,8 +91,8 @@ For a guided path through the API, use the numbered examples under [`crates/id_e
 
 | Resource | Link |
 |----------|------|
+| **Book (primary learning path)** | [**Typed Effects in Rust**](https://industrial.github.io/effect-rs/) — [glossary](https://industrial.github.io/effect-rs/appendix-c-glossary.html) |
 | API reference | [docs.rs/id_effect](https://docs.rs/id_effect) |
-| mdBook (*Typed Effects in Rust*) | [industrial.github.io/id_effect](https://industrial.github.io/id_effect/) |
 | Examples | [`crates/id_effect/examples/`](crates/id_effect/examples/) |
 
 ---

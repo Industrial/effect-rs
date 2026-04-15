@@ -12,110 +12,76 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   NEXTEST_NO_TESTS: pass
+  MOON_TOOLCHAIN_FORCE_GLOBALS: rust
 jobs:
   # ──────────────────────────────────────────────────────────────────────────
-  # 1. Format check (cargo fmt only; full treefmt requires Nix/devenv)
+  # Moon pipeline: PRs = --affected + graph relations; main = full workspace
+  # (treefmt stack required because every crate :check depends on effect:ci-format)
   # ──────────────────────────────────────────────────────────────────────────
-  format:
-    name: Format
+  moon-ci:
+    name: Moon CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Nix (formatters for treefmt)
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Install treefmt toolchain (nixpkgs)
+        run: |
+          nix profile install \
+            nixpkgs#treefmt \
+            nixpkgs#alejandra \
+            nixpkgs#taplo \
+            nixpkgs#deadnix \
+            nixpkgs#actionlint \
+            nixpkgs#beautysh \
+            nixpkgs#yamlfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Biome (treefmt formatter for JS/JSON)
+        run: npm install -g @biomejs/biome
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
-      - name: cargo fmt --check
-        run: cargo fmt --all -- --check
-  # ──────────────────────────────────────────────────────────────────────────
-  # 2. cargo check (all targets, all features)
-  # ──────────────────────────────────────────────────────────────────────────
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: cargo check
-        run: cargo check --workspace --all-targets --all-features
-  # ──────────────────────────────────────────────────────────────────────────
-  # 3. Clippy (all targets, all features, deny warnings)
-  # ──────────────────────────────────────────────────────────────────────────
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    needs: [format, check]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: cargo clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-  # ──────────────────────────────────────────────────────────────────────────
-  # 4. Tests (nextest; all workspace crates)
-  # Note: Dylint custom lints run locally via devenv; skipped here because
-  # they require the Fenix nightly toolchain from Nix.
-  # ──────────────────────────────────────────────────────────────────────────
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: [clippy]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
+          components: rustfmt, clippy
       - name: Cache
         uses: Swatinem/rust-cache@v2
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
-      - name: cargo nextest run
-        run: cargo nextest run --workspace
+      - name: Install moon
+        run: |
+          curl -fsSL https://moonrepo.dev/install/moon.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Fetch base ref (for affected diffs)
+        run: git fetch origin "${{ github.base_ref || 'main' }}"
+      - name: moon sync
+        run: moon sync
+      - name: Moon run (affected on PR, full on main)
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            moon run :ci-format :check :clippy :test :build :examples :docs \
+              --affected \
+              --include-relations \
+              --base "origin/${{ github.base_ref }}" \
+              --head HEAD
+          else
+            moon run :ci-format :check :clippy :test :build :examples :docs
+          fi
   # ──────────────────────────────────────────────────────────────────────────
-  # 5. Build (workspace, all targets, all features)
-  # ──────────────────────────────────────────────────────────────────────────
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: cargo build
-        run: cargo build --workspace --all-targets --all-features
-  # ──────────────────────────────────────────────────────────────────────────
-  # 6. Examples (run all numbered examples; requires the helper script)
-  # ──────────────────────────────────────────────────────────────────────────
-  examples:
-    name: Examples
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: Run workspace examples
-        run: bash scripts/moon-run-crate-examples.sh --workspace
-  # ──────────────────────────────────────────────────────────────────────────
-  # 7. Coverage (llvm-cov nextest; fail under 95% lines/regions/functions)
+  # Workspace coverage (llvm-cov cannot be expressed per-crate easily; run full)
   # ──────────────────────────────────────────────────────────────────────────
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [moon-ci]
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust (stable)
@@ -144,29 +110,13 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
   # ──────────────────────────────────────────────────────────────────────────
-  # 8. Doc check (cargo doc, no warnings)
-  # ──────────────────────────────────────────────────────────────────────────
-  doc-check:
-    name: Doc Check
-    runs-on: ubuntu-latest
-    needs: [check]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-      - name: cargo doc (deny warnings)
-        env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --all-features --no-deps
-  # ──────────────────────────────────────────────────────────────────────────
-  # 9. MSRV / cross-platform matrix (stable + beta; linux + macos + windows)
+  # Cross-platform smoke: full workspace tests (not Moon-affected; OS/toolchain)
   # ──────────────────────────────────────────────────────────────────────────
   matrix:
     name: ${{ matrix.toolchain }} / ${{ matrix.os }}
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ${{ matrix.os }}
-    needs: [check]
+    needs: [moon-ci]
     strategy:
       fail-fast: false
       matrix:
@@ -182,15 +132,15 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.toolchain }}-${{ matrix.os }}
-      - name: cargo test
+      - name: cargo test (workspace)
         run: cargo test --workspace --all-features
   # ──────────────────────────────────────────────────────────────────────────
-  # 10. Minimal-versions check (ensure dep lower bounds are correct)
+  # Minimal-versions lock resolution (workspace-wide)
   # ──────────────────────────────────────────────────────────────────────────
   minimal-versions:
     name: Minimal Versions
     runs-on: ubuntu-latest
-    needs: [check]
+    needs: [moon-ci]
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust (nightly for -Z minimal-versions)
@@ -204,19 +154,14 @@ jobs:
       - name: cargo check (minimal versions, stable)
         run: cargo +stable check --workspace --all-features
   # ──────────────────────────────────────────────────────────────────────────
-  # Required status check gate — all jobs must pass for merge
+  # Required status check gate
   # ──────────────────────────────────────────────────────────────────────────
   ci-pass:
     name: CI Pass
     runs-on: ubuntu-latest
     needs:
-      - format
-      - check
-      - clippy
-      - test
-      - build
-      - examples
-      - doc-check
+      - moon-ci
+      - coverage
       - matrix
       - minimal-versions
     if: always()

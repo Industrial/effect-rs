@@ -1,14 +1,13 @@
 name: Docs & Pages
+# API docs + mdBook are validated in CI (moon run :docs / :book on PRs via moon-ci).
+# This workflow builds the combined site and deploys to Pages from main only.
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
-# Allow only one concurrent deployment; cancel in-flight runs for PRs.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 env:
   CARGO_TERM_COLOR: always
   MDBOOK_VERSION: "0.4.43"
