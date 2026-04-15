@@ -5,7 +5,7 @@
 # Part I: Foundations
 
 - [Why Effects?](./part1/ch01-00-why-effects.md)
-  - [The Async Jungle](./part1/ch01-01-async-jungle.md)
+  - [Challenges in Large Async Codebases](./part1/ch01-01-challenges-in-large-async-codebases.md)
   - [What Even Is an Effect?](./part1/ch01-02-what-is-an-effect.md)
   - [The Three Type Parameters](./part1/ch01-03-type-parameters.md)
   - [Laziness as a Superpower](./part1/ch01-04-laziness.md)
@@ -92,5 +92,5 @@
 # Appendices
 
 - [API Quick Reference](./appendix-a-api-reference.md)
-- [Migrating from Raw Async](./appendix-b-migration.md)
+- [Migrating from `async fn` to effects](./appendix-b-migration.md)
 - [Glossary](./appendix-c-glossary.md)

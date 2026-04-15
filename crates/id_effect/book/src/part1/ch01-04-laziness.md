@@ -2,21 +2,23 @@
 
 So far we've established that `Effect<A, E, R>` is a *description* of a computation — a recipe that does nothing until someone executes it. You might be thinking: "OK, but why is that good? I have to run it *eventually*. What do I gain by waiting?"
 
-Everything.
+Quite a bit, if your program benefits from composing and testing **before** execution.
 
-Let's look at what you can do with a computation you haven't run yet.
+Here is what you can do with a computation you have not run yet.
 
-## The Eager vs. Lazy Showdown
+## Effect values vs driving an `async fn`
 
-Consider two versions of the same operation:
+Rust futures are lazy: calling an `async fn` returns a `Future`; the body runs when that future is polled (for example with `.await`).
+
+The contrast here is about **what your API returns**—a raw `Future` you must await immediately in the caller, versus an `Effect` value you can store, compose, and run later.
 
 ```rust
-// EAGER: fires an HTTP request the moment you call this
-async fn fetch_user_eager(id: u64) -> Result<User, HttpError> {
+// Returns a Future; the HTTP work runs when this future is awaited / polled
+async fn fetch_user_async(id: u64) -> Result<User, HttpError> {
     http_get(&format!("https://api.example.com/users/{id}")).await
 }
 
-// LAZY: builds a description; nothing happens yet
+// Returns a description; I/O runs when the effect is executed with an environment
 fn fetch_user(id: u64) -> Effect<User, HttpError, HttpClient> {
     effect! {
         let user = ~ http_get(&format!("https://api.example.com/users/{id}"));
@@ -25,11 +27,9 @@ fn fetch_user(id: u64) -> Effect<User, HttpError, HttpClient> {
 }
 ```
 
-When you call `fetch_user_eager(1)`, the request goes out. Right now. Whether you wanted it to or not.
+Calling `fetch_user_async(1)` only builds the future; the request runs when something polls it (typically at `.await`). Calling `fetch_user(1)` returns an `Effect`—still no I/O until you run that effect with a runner and the needed `HttpClient`.
 
-When you call `fetch_user(1)`, you get back a value — an `Effect<User, HttpError, HttpClient>`. The network is untouched. You're holding a description of an HTTP call, not the call itself.
-
-This feels like a minor distinction. It isn't.
+The point is not that `async fn` is “eager.” It is that **effects give you a first-class value** to combine (retries, timeouts, tests) before you commit to a particular run.
 
 ## Superpower #1: Compose First, Run Later
 
@@ -93,15 +93,13 @@ fn user_not_found_returns_error() {
 
 The same `fetch_user` function used in production runs in the test — just against a different environment. No `#[cfg(test)]` stubs. No `Arc<dyn Trait>` that you only swap out in tests. The type system ensures you've provided every dependency the effect declared.
 
-## The Philosophical Shift
+## Sequential async vs bundled descriptions
 
-Traditional async code operates in command mode: "Do this. Then do that. If it fails, do this other thing." Each step happens as you write it. Control and execution are interleaved.
+Sequential `async fn` code is natural for linear flows: each `.await` advances the next step, and control matches the source order.
 
-Effect code operates in declaration mode: "Here is everything I want to accomplish, everything that can go wrong, and everything I need. I'm handing you a description. Run it when ready, run it however makes sense, run it under whatever conditions you impose."
+Effect-oriented APIs often bundle those steps into a single `Effect` value first, then apply cross-cutting behavior (retry, timeout, tracing) as **transformations on that value** before calling `run_*`.
 
-You are not issuing orders. You are declaring intent.
-
-This shift has a compounding effect (pun entirely intended). Once your whole codebase thinks in descriptions, every piece of infrastructure — retry, timeout, tracing, rate-limiting, circuit-breaking — can be added as a wrapper without touching the business logic it wraps. The concerns stay separate because the model keeps them separate.
+That separation is useful when the same workflow must be **reused** under different policies or **tested** with a substituted environment, without copying the body of the async function.
 
 ## When Does It Actually Run?
 
@@ -120,10 +118,10 @@ run_test(program, test_env);
 
 Everywhere else, you're building, transforming, or combining descriptions. The runtime boundary is explicit. You know exactly where the side-effects begin.
 
-Until `run_*` is called, your effect is just data. Beautiful, composable, testable data.
+Until `run_*` is called, your effect is just data: composable and easy to substitute in tests.
 
 ---
 
-That's Chapter 1. You now know why effects exist (the Three Horsemen), what they are (descriptions, not actions), what the type parameters mean (`A` = success, `E` = failure, `R` = requirements), and why laziness is a feature rather than a quirk.
+That's Chapter 1. You now have a picture of **why** teams adopt effects (errors, dependencies, concurrency structure), **what** an `Effect` is (a description executed with an environment), what the type parameters mean (`A` = success, `E` = failure, `R` = requirements), and **why** keeping work in description form matters for composition and testing.
 
-Chapter 2 gets hands-on. We'll write our first real effects, transform them with `map`, chain them with `flat_map`, and build a small program from scratch. Time to stop describing descriptions and start writing some.
+Chapter 2 gets hands-on: first effects, `map`, `flat_map`, and a small end-to-end program.

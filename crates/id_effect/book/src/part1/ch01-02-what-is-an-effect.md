@@ -1,12 +1,8 @@
 # What Even Is an Effect?
 
-You've felt the pain. Now let's talk about the cure.
-
-An Effect is not complicated. It's not abstract mathematics dressed up in Rust syntax. It's a simple idea that, once you see it, you can't unsee.
-
 **An Effect is a description of a computation, not the computation itself.**
 
-That's it. That's the whole idea. Everything else is just consequences.
+The rest of the API—`map`, `flat_map`, environment types, runners—is there to work with that description in a type-safe way.
 
 ## The Recipe Analogy
 
@@ -90,7 +86,7 @@ That `effect!` block looks imperative — it looks like it's doing things. But i
 
 ## The Key Insight: Separation of Concerns
 
-This separation — description vs execution — is why the Three Horsemen from the last section can be defeated.
+This separation — description vs execution — is how the challenges from the previous section (errors, dependencies, task structure) get a consistent home in the type system.
 
 **Error handling** becomes part of the description itself. When you write:
 
@@ -133,14 +129,12 @@ fn process_payment(
 
 No need to read the function body to know what resources it needs or what errors it can produce. The type *is* the documentation.
 
-## The Philosophical Shift
+## Style: imperative async vs effect descriptions
 
-Traditional async code is imperative: "Do this. Then do that. If something goes wrong, handle it."
+Typical `async fn` code is written as a sequence of steps: each `.await` drives the next piece of work. That is clear and idiomatic Rust.
 
-Effect code is declarative: "Here is what I want to happen, what could go wrong, and what I need. Make it so."
+Effect code in this library is often written so that **many domain functions return `Effect<…>`**: a value that describes work and only runs when you pass it to a runner with an environment. The style emphasizes **composition** (map, flat_map, layers, retries) before execution.
 
-You're not commanding troops in real-time. You're drafting battle plans that a general (the runtime) will execute. And because the general can see the whole plan before executing it, the general can make smart decisions about resource allocation, error recovery, and cancellation.
-
-This shift takes some getting used to. But once it clicks, you'll wonder how you ever wrote async code any other way.
+Both approaches run on the same `Future` machinery underneath. Use effects where you want environment and error structure in the type, shared policies, and test substitution at the boundary; use plain `async fn` where a small linear function is enough.
 
 Let's look at those three type parameters in detail.
