@@ -1,9 +1,9 @@
 //! [`tower::Service`] implementations that run [`id_effect::Effect`] programs using
-//! [`effect_tokio::run_async`], so handlers stay in the Effect interpreter while composing with
+//! [`id_effect_tokio::run_async`], so handlers stay in the Effect interpreter while composing with
 //! Tower middleware stacks.
 //!
 //! This crate depends on **`id_effect_tokio`** for the async runtime bridge; it does not re-export
-//! [`effect_tokio::TokioRuntime`].
+//! [`id_effect_tokio::TokioRuntime`].
 //!
 //! ## Concurrency
 //!
@@ -31,9 +31,9 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
-use effect_tokio::run_async as run_effect_async;
 use id_effect::duration::Duration;
 use id_effect::{Effect, Metric, QueueError, SynchronizedRef, box_future};
+use id_effect_tokio::run_async as run_effect_async;
 use tokio::sync::{AcquireError, OwnedSemaphorePermit, Semaphore};
 use tower::Service;
 

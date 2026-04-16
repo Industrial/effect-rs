@@ -85,7 +85,7 @@ pub trait ConfigProvider: Send + Sync {
   /// (Effect `ConfigProvider.within`).
   ///
   /// ```rust
-  /// use effect_config::{ConfigProvider, MapConfigProvider};
+  /// use id_effect_config::{ConfigProvider, MapConfigProvider};
   ///
   /// let base = MapConfigProvider::from_pairs([("SERVER_HOST", "localhost")]);
   /// let scoped = base.within("SERVER");
@@ -329,7 +329,7 @@ impl<A: ConfigProvider + Clone + 'static, B: ConfigProvider + Clone + 'static> C
 /// Created via [`ConfigProvider::within`].
 ///
 /// ```rust
-/// use effect_config::{ConfigProvider, MapConfigProvider, config};
+/// use id_effect_config::{ConfigProvider, MapConfigProvider, config};
 ///
 /// let base = MapConfigProvider::from_pairs([("DB_HOST", "localhost"), ("DB_PORT", "5432")]);
 /// let db = base.within("DB");

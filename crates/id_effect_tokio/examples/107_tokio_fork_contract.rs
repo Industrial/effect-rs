@@ -2,9 +2,9 @@
 //!
 //! Run: `cargo run -p id_effect_tokio --example 107_tokio_fork_contract`
 
-use effect_tokio::TokioRuntime;
 use id_effect::kernel::succeed;
 use id_effect::run_fork;
+use id_effect_tokio::TokioRuntime;
 
 fn main() {
   let rt = TokioRuntime::new_current_thread().expect("tokio runtime should build");

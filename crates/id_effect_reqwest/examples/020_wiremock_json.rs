@@ -1,10 +1,10 @@
-//! [`effect_reqwest::json`] with a typed response body.
+//! [`id_effect_reqwest::json`] with a typed response body.
 //!
 //! Run: `cargo run -p id_effect_reqwest --example 020_wiremock_json`
 
-use effect_reqwest::{Client, Error, ReqwestClientKey, json};
-use effect_tokio::run_async;
 use id_effect::service_env;
+use id_effect_reqwest::{Client, Error, ReqwestClientKey, json};
+use id_effect_tokio::run_async;
 use serde::{Deserialize, Serialize};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};

@@ -4,7 +4,7 @@
 //! Run: `RUST_LOG=trace devenv shell -- cargo run -p logger --example log_effects`
 
 use ::id_effect::{Cons, Context, Effect, Nil, Service, effect, run_blocking};
-use effect_logger::{EffectLogKey, EffectLogger, EffectLoggerError};
+use id_effect_logger::{EffectLogKey, EffectLogger, EffectLoggerError};
 
 type LogCtx = Context<Cons<Service<EffectLogKey, EffectLogger>, Nil>>;
 

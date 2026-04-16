@@ -1,6 +1,6 @@
 [package]
 name = "id_effect_tower"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Tower Service bridge for `effect` programs (runs effects via id_effect_tokio)"
 license = "CC-BY-SA-4.0"
@@ -14,11 +14,11 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_tower"
+name = "id_effect_tower"
 
 [dependencies]
 id_effect = { path = "../id_effect", version = "0.1.0" }
-id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.0" }
+id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.1" }
 tokio = { version = "1", features = ["sync"] }
 # 0.5.0 does not build under minimal-version resolution (const / Identity::new).
 tower = { version = "0.5.3", features = ["util"] }

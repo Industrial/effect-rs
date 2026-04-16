@@ -10,8 +10,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use effect_tower::EffectService;
 use id_effect::succeed;
+use id_effect_tower::EffectService;
 use tower::{Service, ServiceExt};
 
 #[tokio::main(flavor = "current_thread")]

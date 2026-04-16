@@ -14,7 +14,7 @@
 //!
 //! ```rust
 //! use std::sync::Arc;
-//! use effect_config::{Config, MapConfigProvider, config_env, ConfigError};
+//! use id_effect_config::{Config, MapConfigProvider, config_env, ConfigError};
 //! use id_effect::run_blocking;
 //!
 //! let p = MapConfigProvider::from_pairs([
@@ -43,8 +43,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ::id_effect::{Effect, Get, Here, effect};
-use effect_logger::LogLevel;
 use id_effect::duration::duration;
+use id_effect_logger::LogLevel;
 use url::Url;
 
 use crate::ambient::current_config_provider;
@@ -152,7 +152,7 @@ impl<T: Send + Sync + 'static> Config<T> {
   /// Transform the loaded value (Effect `Config.map`).
   ///
   /// ```rust
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs([("PORT", "8080")]);
   /// let port_u16: u16 = Config::integer("PORT").map(|n| n as u16).load(&p).unwrap();
@@ -190,7 +190,7 @@ impl<T: Send + Sync + 'static> Config<T> {
   /// Wrap the loaded value in [`Secret`] so it is never printed (Effect `Config.secret`).
   ///
   /// ```rust
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs([("API_KEY", "s3cr3t")]);
   /// let key = Config::string("API_KEY").secret().load(&p).unwrap();
@@ -209,7 +209,7 @@ impl<T: Send + Sync + 'static> Config<T> {
   /// `Config::string("PORT").nested("SERVER")` looks up `["SERVER", "PORT"]`.
   ///
   /// ```rust
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs([("SERVER_HOST", "127.0.0.1")]);
   /// let host = Config::string("HOST").nested("SERVER").load(&p).unwrap();
@@ -245,7 +245,7 @@ impl<T: Clone + Send + Sync + 'static> Config<T> {
   /// Only [`ConfigError::Missing`] triggers the fallback; parse errors still propagate.
   ///
   /// ```rust
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs::<[(&str, &str); 0], _, _>([]);
   /// let port = Config::integer("PORT").with_default(3000).load(&p).unwrap();
@@ -265,7 +265,7 @@ impl<T: Clone + Send + Sync + 'static> Config<T> {
   /// Validate the loaded value; produces `ConfigError::Invalid` when `predicate` is false.
   ///
   /// ```rust
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs([("PORT", "99999")]);
   /// let err = Config::integer("PORT")
@@ -464,7 +464,7 @@ impl Config<Duration> {
   ///
   /// ```rust
   /// use std::time::Duration;
-  /// use effect_config::{Config, MapConfigProvider};
+  /// use id_effect_config::{Config, MapConfigProvider};
   ///
   /// let p = MapConfigProvider::from_pairs([("TIMEOUT", "5s")]);
   /// let t = Config::duration("TIMEOUT").load(&p).unwrap();
@@ -493,7 +493,7 @@ impl Config<Duration> {
 }
 
 impl Config<LogLevel> {
-  /// Load a [`LogLevel`] (case-insensitive; see [`LogLevel`](effect_logger::LogLevel)).
+  /// Load a [`LogLevel`] (case-insensitive; see [`LogLevel`](id_effect_logger::LogLevel)).
   pub fn log_level(path: impl Into<String>) -> Self {
     let segs = split_dotted(&path.into());
     Self::new(move |p| {
@@ -547,7 +547,7 @@ impl Config<Url> {
 /// Both are loaded; the first error encountered is returned.
 ///
 /// ```rust
-/// use effect_config::{config, Config, MapConfigProvider};
+/// use id_effect_config::{config, Config, MapConfigProvider};
 ///
 /// let p = MapConfigProvider::from_pairs([("HOST", "0.0.0.0"), ("PORT", "9000")]);
 /// let (host, port) = config::all(Config::string("HOST"), Config::integer("PORT"))
@@ -640,7 +640,7 @@ mod tests {
   use std::time::Duration;
 
   use crate::MapConfigProvider;
-  use effect_logger::LogLevel;
+  use id_effect_logger::LogLevel;
 
   use super::*;
 

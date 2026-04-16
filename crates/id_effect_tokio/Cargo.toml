@@ -1,6 +1,6 @@
 [package]
 name = "id_effect_tokio"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Tokio runtime adapter and re-exports for the workspace `effect` crate"
 license = "CC-BY-SA-4.0"
@@ -14,7 +14,7 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_tokio"
+name = "id_effect_tokio"
 
 [dependencies]
 id_effect = { path = "../id_effect", version = "0.1.0" }

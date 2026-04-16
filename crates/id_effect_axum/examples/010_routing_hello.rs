@@ -1,14 +1,14 @@
-//! Minimal [`Router`] + [`effect_axum::routing::get`]: state → `Effect` → HTTP response.
+//! Minimal [`Router`] + [`id_effect_axum::routing::get`]: state → `Effect` → HTTP response.
 //!
 //! Run: `cargo run -p id_effect_axum --example 010_routing_hello`
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::routing::Router;
-use effect_axum::routing;
 use http_body_util::BodyExt;
 use id_effect::Effect;
 use id_effect::succeed;
+use id_effect_axum::routing;
 use std::convert::Infallible;
 use tower::ServiceExt;
 
