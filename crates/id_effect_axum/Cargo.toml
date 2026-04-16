@@ -1,6 +1,6 @@
 [package]
 name = "id_effect_axum"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "CC-BY-SA-4.0"
 description = "Axum integration for the workspace `effect` crate — run Effect handlers on Tokio"
@@ -14,13 +14,13 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_axum"
+name = "id_effect_axum"
 
 [dependencies]
 id_effect = { path = "../id_effect", version = "0.1.0", features = [
   "schema-serde",
 ] }
-id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.0" }
+id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.1" }
 axum = { version = "0.7" }
 http-body-util = "0.1"
 serde = { version = "1", features = ["derive"] }

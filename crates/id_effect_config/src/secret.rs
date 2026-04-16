@@ -7,7 +7,7 @@ use std::fmt;
 /// Mirrors Effect.ts `Config.secret` / `ConfigSecret`.
 ///
 /// ```rust
-/// use effect_config::Secret;
+/// use id_effect_config::Secret;
 ///
 /// let token = Secret::new("my-api-key".to_string());
 /// assert_eq!(format!("{token:?}"), "<redacted>");

@@ -2,8 +2,8 @@
 //!
 //! Run: `cargo run -p id_effect_tokio --example 109_tokio_end_to_end`
 
-use effect_tokio::{TokioRuntime, yield_now};
 use id_effect::{Effect, Runtime, Skip1, Skip2, Stream, ctx, effect, req, run_async, succeed};
+use id_effect_tokio::{TokioRuntime, yield_now};
 use std::time::Duration;
 
 id_effect::service_key!(struct ApiBaseUrlKey);

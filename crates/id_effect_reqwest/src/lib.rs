@@ -14,13 +14,13 @@
 //! This crate depends only on **`effect`** (and `reqwest`). Async HTTP steps are ordinary
 //! [`Effect::new_async`](id_effect::Effect::new_async) bodies; drive them on Tokio with
 //! [`id_effect::run_async`] or the same symbol re-exported from **`id_effect_tokio`** as
-//! `effect_tokio::run_async` (recommended in Tokio services so sleep/yield stay consistent).
+//! `id_effect_tokio::run_async` (recommended in Tokio services so sleep/yield stay consistent).
 //!
 //! ## Example
 //!
 //! ```ignore
 //! use id_effect::{ctx, run_async, service, Context, Cons, Nil};
-//! use effect_reqwest::{ReqwestClientKey, send};
+//! use id_effect_reqwest::{ReqwestClientKey, send};
 //!
 //! type Env = Context<Cons<id_effect::Service<ReqwestClientKey, reqwest::Client>, Nil>>;
 //!

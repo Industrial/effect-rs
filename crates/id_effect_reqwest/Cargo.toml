@@ -1,6 +1,6 @@
 [package]
 name = "id_effect_reqwest"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "CC-BY-SA-4.0"
 description = "reqwest integration for the workspace `effect` crate — HTTP as Effect programs"
@@ -14,7 +14,7 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_reqwest"
+name = "id_effect_reqwest"
 
 [dependencies]
 bytes = "1"
@@ -32,6 +32,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 [dev-dependencies]
-id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.0" }
+id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.1" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 wiremock = "0.6"

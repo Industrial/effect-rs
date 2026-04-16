@@ -7,7 +7,7 @@
 //! - Your domain stays in `Effect<A, E, R>` with environment `R` (often clone-cheap state with
 //!   `Arc` fields, or a [`id_effect::Context`] stack).
 //! - This crate **bridges** `State<R>` → `&mut R` for one build step, then runs the effect with
-//!   [`effect_tokio::run_async`] so pending effect steps compose with Tokio I/O.
+//!   [`id_effect_tokio::run_async`] so pending effect steps compose with Tokio I/O.
 //!
 //! ## Runtime requirements
 //!
@@ -23,7 +23,7 @@
 //!
 //! **Yes — this crate is built on `id_effect_tokio`** (workspace crate `crates/id_effect_tokio`).
 //! [`crate::routing`] and [`run_with_env`]/[`execute`] all drive effects via
-//! [`effect_tokio::run_async`], so async steps inside `Effect` run on the **same** Tokio runtime as
+//! [`id_effect_tokio::run_async`], so async steps inside `Effect` run on the **same** Tokio runtime as
 //! `#[tokio::main]` / `axum::serve`.
 //!
 //! ## Quick start
@@ -31,7 +31,7 @@
 //! ```ignore
 //! use axum::{Router, extract::State};
 //! use id_effect::{succeed, Effect};
-//! use effect_axum::routing;
+//! use id_effect_axum::routing;
 //!
 //! #[derive(Clone)]
 //! struct AppState { /* … */ }
@@ -74,8 +74,8 @@ pub use channel_bridge::{exchange, exchange_into_response};
 
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
-use effect_tokio::run_async;
 use id_effect::Effect;
+use id_effect_tokio::run_async;
 
 /// Run `build(&mut env)` to obtain an effect, then drive it to completion with the **same** `env`.
 ///

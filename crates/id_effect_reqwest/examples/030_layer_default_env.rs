@@ -1,12 +1,12 @@
-//! Build an [`effect_reqwest::Client`] with [`effect_reqwest::layer_reqwest_client_default`], wrap it in a
+//! Build an [`id_effect_reqwest::Client`] with [`id_effect_reqwest::layer_reqwest_client_default`], wrap it in a
 //! [`id_effect::Context`], and run an HTTP [`id_effect::Effect`].
 //!
 //! Run: `cargo run -p id_effect_reqwest --example 030_layer_default_env`
 
-use effect_reqwest::{Error, layer_reqwest_client_default, text};
-use effect_tokio::run_async;
 use id_effect::Layer;
 use id_effect::context::{Cons, Context, Nil};
+use id_effect_reqwest::{Error, layer_reqwest_client_default, text};
+use id_effect_tokio::run_async;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 

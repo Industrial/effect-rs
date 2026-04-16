@@ -1,4 +1,4 @@
-//! Use [`effect_axum::execute`] when the handler is already an `async` closure and you want to
+//! Use [`id_effect_axum::execute`] when the handler is already an `async` closure and you want to
 //! compose extra Axum extractors or middleware around [`State`].
 //!
 //! Run: `cargo run -p id_effect_axum --example 030_execute_handler`
@@ -7,9 +7,9 @@ use axum::body::Body;
 use axum::extract::State;
 use axum::http::{Request, StatusCode};
 use axum::routing::Router;
-use effect_axum::execute;
 use http_body_util::BodyExt;
 use id_effect::succeed;
+use id_effect_axum::execute;
 use std::convert::Infallible;
 use tower::ServiceExt;
 
