@@ -1,6 +1,7 @@
 # Enables squash auto-merge for Dependabot PRs after required checks pass.
-# Requires: repo setting "Allow auto-merge", branch protection with required checks,
-# and (if reviews are required) rules that accept this workflow's approval.
+# Requires: Settings → General → Allow auto-merge; branch protection + required checks;
+# Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests"
+# (or optional repo secret PR_APPROVE_TOKEN: fine-grained PAT with PR write, if org forbids the above).
 name: dependabot-auto-merge
 on:
   pull_request:
@@ -16,13 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
+        with:
+          github-token: ${{ github.token }}
+          skip-commit-verification: true
       - name: Approve PR
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional PR_APPROVE_TOKEN if the repo/org blocks GITHUB_TOKEN from approving (see workflow header).
+          GH_TOKEN: ${{ secrets.PR_APPROVE_TOKEN != '' && secrets.PR_APPROVE_TOKEN || github.token }}
       - name: Enable auto-merge (squash)
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
