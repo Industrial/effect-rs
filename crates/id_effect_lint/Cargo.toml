@@ -1,17 +1,21 @@
 [package]
 name = "id_effect_lint"
-version = "0.1.0"
-description = "Custom Dylint lints enforcing idiomatic Effect.rs code"
+version = "0.2.0"
+description = "Custom rustc lints for idiomatic Effect.rs code (dynamic plugin; nightly rustc_private)"
 edition = "2024"
-publish = false
+license = "CC-BY-SA-4.0"
+repository = "https://github.com/Industrial/id_effect"
+documentation = "https://github.com/Industrial/id_effect/tree/main/crates/id_effect_lint"
+readme = "README.md"
+keywords = ["effect", "lint", "rustc", "plugin"]
+categories = ["development-tools"]
+# Omit test harness + rule YAML from the crates.io tarball (src + README only for consumers).
+exclude = ["ui", "rules", "sgconfig.yml"]
 
 [lib]
 crate-type = ["cdylib"]
 
-# No dylint_linting, clippy_utils, or dylint_testing – we talk directly to
-# rustc_* crates so the library is always compatible with whatever nightly
-# devenv provides.  UI tests can be added once a rustup-compatible CI env
-# is available.
+# Links against unstable `rustc_*` crates; build with a nightly toolchain that matches your driver.
 
 [package.metadata.rust-analyzer]
 rustc_private = true
