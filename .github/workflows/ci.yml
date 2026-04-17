@@ -104,7 +104,7 @@ jobs:
             --fail-under-regions 95 \
             --fail-under-functions 95
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: lcov.info
           fail_ci_if_error: false
