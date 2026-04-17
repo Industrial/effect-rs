@@ -1,6 +1,6 @@
 [package]
 name = "id_effect_proc_macro"
-version = "1.2.0"
+version = "0.2.0"
 edition = "2024"
 description = "Procedural `effect!` macro for the `effect` crate (proc-macro only; declarative macros live in `id_effect_macro`)"
 license = "CC-BY-SA-4.0"
