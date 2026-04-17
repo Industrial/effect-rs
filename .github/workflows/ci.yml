@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Nix (formatters for treefmt)
-        uses: cachix/install-nix-action@v30
+        uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
