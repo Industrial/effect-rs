@@ -197,4 +197,38 @@ mod tests {
     let t2 = rt.now();
     assert!(t2 >= t1, "now() should be non-decreasing");
   }
+
+  #[test]
+  fn new_multi_thread_block_on_runs_async() {
+    let rt = TokioRuntime::new_multi_thread().expect("multi-thread runtime should build");
+    rt.block_on(async {
+      assert_eq!(
+        run_async(rt.sleep(Duration::from_millis(0)), ()).await,
+        Ok(())
+      );
+    });
+  }
+
+  #[test]
+  fn current_fails_when_no_tokio_runtime() {
+    let res = std::thread::spawn(TokioRuntime::current)
+      .join()
+      .expect("thread should not panic");
+    let err = match res {
+      Err(e) => e,
+      Ok(_) => panic!("expected Err outside a Tokio context"),
+    };
+    assert!(
+      err.to_string().contains("no current tokio runtime"),
+      "unexpected error: {err}"
+    );
+  }
+
+  #[test]
+  #[should_panic(expected = "TokioRuntime::block_on requires")]
+  fn block_on_panics_when_adapter_has_no_owned_runtime() {
+    let owned = TokioRuntime::new_current_thread().expect("runtime");
+    let adapter = TokioRuntime::from_handle(owned.handle());
+    adapter.block_on(async {});
+  }
 }
