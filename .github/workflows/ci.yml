@@ -40,7 +40,7 @@ jobs:
             nixpkgs#actionlint \
             nixpkgs#beautysh \
             nixpkgs#yamlfmt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
       - name: Install Biome (treefmt formatter for JS/JSON)
