@@ -89,6 +89,11 @@ Workspace crate bridging **Axum** handlers to **`Effect`**: `State<R>`, `routing
 
 ---
 
+**`id_effect_cli`**
+Workspace crate for **CLI entrypoints**: optional **`clap`**, [`run_main`](./part3/ch16-00-cli-with-clap.md), and mapping [`Exit`](./part3/ch08-02-exit.md) / [`Cause`](./part3/ch08-02-exit.md) to process exit codes. See [CLI with clap](./part3/ch16-00-cli-with-clap.md).
+
+---
+
 **`id_effect_config`**
 Workspace crate for **configuration**: `Config<T>` descriptors, Figment/serde extraction, and effectful reads from a provider in `R`. See [Configuration](./part2/ch07-10-config.md).
 

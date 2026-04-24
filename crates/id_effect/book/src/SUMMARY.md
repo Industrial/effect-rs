@@ -73,6 +73,9 @@
   - [Built-in Schedules](./part3/ch11-02-builtin-schedules.md)
   - [retry and repeat](./part3/ch11-03-retry-repeat.md)
   - [Clock Injection](./part3/ch11-04-clock-injection.md)
+- [CLI with clap](./part3/ch16-00-cli-with-clap.md)
+  - [Exit codes for `main`](./part3/ch16-01-cli-exit-codes.md)
+  - [Config + `Secret` from flags](./part3/ch16-02-cli-config-secret.md)
 
 # Part IV: Advanced
 

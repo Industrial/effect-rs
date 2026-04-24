@@ -47,6 +47,7 @@ jobs:
             crates/id_effect_proc_macro/Cargo.toml
             crates/id_effect_macro/Cargo.toml
             crates/id_effect/Cargo.toml
+            crates/id_effect_cli/Cargo.toml
             crates/id_effect_tokio/Cargo.toml
             crates/id_effect_logger/Cargo.toml
             crates/id_effect_config/Cargo.toml
@@ -139,6 +140,15 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           args=(--package id_effect --no-verify)
+          [ "${{ inputs.dry_run }}" = "true" ] && args+=(--dry-run)
+          cargo publish "${args[@]}"
+      - name: Wait for crates.io index
+        run: sleep 20
+      - name: Publish id_effect_cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          args=(--package id_effect_cli --no-verify)
           [ "${{ inputs.dry_run }}" = "true" ] && args+=(--dry-run)
           cargo publish "${args[@]}"
   # ──────────────────────────────────────────────────────────────────────────

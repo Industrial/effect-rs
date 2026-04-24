@@ -1,0 +1,37 @@
+[package]
+name = "id_effect_cli"
+version = "0.2.0"
+edition = "2024"
+license = "CC-BY-SA-4.0"
+description = "CLI helpers for id_effect: optional clap, Exit/Cause → ExitCode, tracing init, run_main"
+repository = "https://github.com/Industrial/id_effect"
+readme = "README.md"
+
+[lints.rust]
+unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = [
+  'cfg(coverage)',
+  'cfg(feature, values("mock", "clap"))',
+] }
+
+[features]
+default = ["clap"]
+clap = ["dep:clap"]
+
+[dependencies]
+id_effect = { path = "../id_effect", version = "0.2.0" }
+clap = { version = "4.5", optional = true, default-features = false, features = [
+  "std",
+  "derive",
+  "help",
+  "usage",
+  "error-context",
+] }
+
+[dev-dependencies]
+rstest = "0.26"
+
+[[bin]]
+name = "ie_cli_probe"
+path = "src/bin/ie_cli_probe.rs"
+required-features = ["clap"]

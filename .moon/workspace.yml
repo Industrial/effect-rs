@@ -1,8 +1,10 @@
 # https://moonrepo.dev/docs/config/workspace
 $schema: https://moonrepo.dev/schemas/workspace.json
 projects:
+  cli_minimal: examples/cli-minimal
   effect: '.'
   id_effect_lib: crates/id_effect
+  id_effect_cli: crates/id_effect_cli
   id_effect_platform: crates/id_effect_platform
   id_effect_axum: crates/id_effect_axum
   id_effect_config: crates/id_effect_config

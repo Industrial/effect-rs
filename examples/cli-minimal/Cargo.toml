@@ -1,0 +1,30 @@
+[package]
+name = "cli_minimal"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Phase E minimal CLI — clap + id_effect_cli + id_effect_config (Secret)"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+# ConfigError is large; this example returns Result<_, ConfigError> like id_effect_config.
+result_large_err = "allow"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4.5", default-features = false, features = [
+  "std",
+  "derive",
+  "help",
+  "usage",
+  "error-context",
+] }
+id_effect = { path = "../../crates/id_effect", version = "0.2.0" }
+id_effect_cli = { path = "../../crates/id_effect_cli", version = "0.2.0", features = [
+  "clap",
+] }
+id_effect_config = { path = "../../crates/id_effect_config", version = "0.2.0" }

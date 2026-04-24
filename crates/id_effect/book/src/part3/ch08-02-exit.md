@@ -7,30 +7,18 @@ Every effect execution ends with an `Exit`. It's the final word on what happened
 ```rust
 use id_effect::Exit;
 
-enum Exit<E, A> {
+enum Exit<A, E> {
     Success(A),         // Effect completed, produced A
     Failure(Cause<E>),  // Effect failed with Cause<E>
 }
 ```
 
-`Exit` combines the success type and the full failure taxonomy. It's what you get when you use `run_to_exit` instead of `run_blocking`:
+`Exit` combines the success type and the full failure taxonomy.
 
-```rust
-use id_effect::run_to_exit;
+- **`run_blocking`** returns **`Result<A, E>`** — you only see typed **`E`** failures; defects and interrupts are not represented as values there.
+- [`run_test`](../part4/ch15-01-run-test.md) returns **`Exit<A, E>`** and is the right harness for **unit tests** that must assert on defects, interrupts, and typed failures.
 
-// run_blocking returns Result<A, E> — loses Cause::Die and Cause::Interrupt info
-let user: Result<User, DbError> = run_blocking(get_user(1))?;
-
-// run_to_exit returns Exit<E, A> — full picture
-let exit: Exit<DbError, User> = run_to_exit(get_user(1));
-
-match exit {
-    Exit::Success(user)                    => println!("Got user: {}", user.name),
-    Exit::Failure(Cause::Fail(DbError::NotFound)) => println!("User not found"),
-    Exit::Failure(Cause::Die(panic_val))   => eprintln!("Defect: {:?}", panic_val),
-    Exit::Failure(Cause::Interrupt)        => println!("Cancelled"),
-}
-```
+For **CLI / process exit codes**, map an `Exit` with **`id_effect_cli::exit_code_for_exit`** (see [CLI with clap](./ch16-00-cli-with-clap.md)).
 
 ## Converting Exit to Result
 
@@ -40,7 +28,7 @@ Most application code wants `Result`. The conversion is straightforward:
 let result: Result<User, AppError> = exit.into_result(|cause| match cause {
     Cause::Fail(e) => AppError::Expected(e),
     Cause::Die(_)  => AppError::Defect,
-    Cause::Interrupt => AppError::Cancelled,
+    Cause::Interrupt(_) => AppError::Cancelled,
 });
 ```
 
@@ -56,11 +44,11 @@ When you join a fiber (Chapter 9), you get an `Exit` back:
 
 ```rust
 let fiber = my_effect.fork();
-let exit: Exit<E, A> = fiber.join().await;
+let exit: Exit<A, E> = fiber.join().await;
 ```
 
 This lets you inspect whether the fiber succeeded, failed with a typed error, panicked, or was cancelled — and respond appropriately in the parent fiber.
 
 ## Practical Rule
 
-Use `run_blocking` (which returns `Result<A, E>`) for 90% of cases. Use `run_to_exit` when you need to distinguish panics from typed failures — typically at top-level handlers, supervisors, or when integrating with external error reporting.
+Use **`run_blocking`** (which returns **`Result<A, E>`**) for most application logic. Use **`run_test`** when you need the full **`Exit`** taxonomy in tests. At the **process edge** (binaries), combine **`run_main`** / **`exit_code_for_exit`** from **`id_effect_cli`** with the table in the [CLI exit codes](./ch16-01-cli-exit-codes.md) chapter.
