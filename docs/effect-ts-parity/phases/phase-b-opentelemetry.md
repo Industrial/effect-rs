@@ -4,6 +4,8 @@
 **Effect.ts reference:** `@effect/opentelemetry` — traces, metrics, logs aligned with OTEL semantics and context propagation.  
 **Goal:** First-class **OpenTelemetry** export and **context propagation** integrated with `id_effect` fibers, spans, and existing `observability` hooks—without forcing every user to depend on OTEL in the core crate.
 
+**Implementation (workspace):** `crates/id_effect_opentelemetry` — tracing bridge (`with_span_otel`), W3C header propagation, metric bridges, and mdBook `part2/ch07-12-opentelemetry.md`.
+
 ## Executive summary
 
 `id_effect` already exposes **tracing-oriented** APIs (`with_span`, fiber events, metrics primitives). Phase B adds an **`id_effect_opentelemetry`** (name TBD) integration crate that:

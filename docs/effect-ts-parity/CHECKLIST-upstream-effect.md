@@ -17,7 +17,7 @@
 | `FiberRef` | Fiber-local state | `fiber_ref.rs` | |
 | `Cause` / `Exit` | Failure | `crates/id_effect/src/failure/` | |
 | `@effect/platform` | HTTP, FS, process | *Planned Phase A* — `docs/effect-ts-parity/phases/phase-a-unified-platform.md` | |
-| `@effect/opentelemetry` | OTEL | *Planned Phase B* | |
+| `@effect/opentelemetry` | OTEL | **Phase B** — `crates/id_effect_opentelemetry` + mdBook `part2/ch07-12-opentelemetry.md` | |
 | `@effect/sql` | Database | *Planned Phase C* | |
 | `@effect/rpc` | RPC | *Planned Phase D* | |
 | `@effect/cli` | CLI | *Planned Phase E* | |
