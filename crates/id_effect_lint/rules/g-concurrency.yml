@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # G-01  Fork result must be bound – not dropped
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-fork-must-be-joined
+- id: id_effect-fork-must-be-joined
   language: Rust
   severity: warning
   message: |
@@ -21,7 +21,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # G-03  No Arc<Mutex> / Arc<RwLock> for fiber coordination
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-arc-mutex-for-fiber-coordination
+- id: id_effect-no-arc-mutex-for-fiber-coordination
   language: Rust
   severity: warning
   message: |
@@ -40,7 +40,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # G-04  No Rc<RefCell> in Effect code
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-rc-refcell
+- id: id_effect-no-rc-refcell
   language: Rust
   severity: error
   message: |

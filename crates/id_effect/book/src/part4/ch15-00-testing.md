@@ -1,8 +1,8 @@
 # Testing — Effects Are Easy to Test
 
-Testing async code is usually painful. You spin up real servers, wrestle with timing, mock the world, and still get flaky tests that fail on CI every other Tuesday.
+Testing async code often means standing up infrastructure, dealing with timing, and wide mocks—then chasing occasional flakes in CI.
 
-Effect programs test differently. Because an `Effect` is a description of what to do — not the doing itself — you control everything about how it runs. Swap in a test clock. Provide fake services through the `Layer` system. Detect fiber leaks automatically. Run in microseconds instead of seconds.
+Effect programs can be tested differently. Because an `Effect` is a description of what to do — not the doing itself — you control everything about how it runs. Swap in a test clock. Provide fake services through the `Layer` system. Detect fiber leaks automatically. Run in microseconds instead of seconds.
 
 This chapter covers the testing tools id_effect provides.
 

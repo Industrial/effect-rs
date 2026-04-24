@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # A-01  No async fn in Effect.rs code
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-async-fn
+- id: id_effect-no-async-fn
   language: Rust
   severity: error
   message: |
@@ -31,7 +31,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # A-02  Public functions must not return Result<T, E>
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-result-return-pub-fn
+- id: id_effect-no-result-return-pub-fn
   language: Rust
   severity: error
   message: |
@@ -49,7 +49,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # A-03  Effect-returning functions must have a where clause
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-effect-fn-requires-where-clause
+- id: id_effect-effect-fn-requires-where-clause
   language: Rust
   severity: error
   message: |
@@ -67,7 +67,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # A-07  No `_effect` suffix on Effect-returning functions
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-effect-suffix
+- id: id_effect-no-effect-suffix
   language: Rust
   severity: warning
   message: |
@@ -84,7 +84,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # A-08  `_blocking` suffix reserved for effect-running wrappers
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-blocking-suffix-misuse
+- id: id_effect-blocking-suffix-misuse
   language: Rust
   severity: warning
   message: |

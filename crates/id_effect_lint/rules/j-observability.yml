@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # J-01  No println! / eprintln! in Effect-returning functions
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-println-in-effect
+- id: id_effect-no-println-in-effect
   language: Rust
   severity: warning
   message: |

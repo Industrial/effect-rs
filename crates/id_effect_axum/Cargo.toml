@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_axum"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "CC-BY-SA-4.0"
 description = "Axum integration for the workspace `effect` crate — run Effect handlers on Tokio"
-repository = "https://github.com/Industrial/effect-rs"
+repository = "https://github.com/Industrial/id_effect"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -14,14 +14,14 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_axum"
+name = "id_effect_axum"
 
 [dependencies]
-id_effect = { path = "../id_effect", version = "0.1.0", features = [
+id_effect = { path = "../id_effect", version = "0.2.0", features = [
   "schema-serde",
 ] }
-id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.0" }
-axum = { version = "0.7" }
+id_effect_tokio = { path = "../id_effect_tokio", version = "0.2.0" }
+axum = { version = "0.8" }
 http-body-util = "0.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

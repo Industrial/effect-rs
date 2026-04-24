@@ -2,8 +2,8 @@
 //!
 //! Run: `cargo run -p id_effect_tokio --example 108_tokio_clock`
 
-use effect_tokio::{TokioRuntime, run_async, yield_now};
 use id_effect::Runtime;
+use id_effect_tokio::{TokioRuntime, run_async, yield_now};
 use std::time::Duration;
 
 fn main() {

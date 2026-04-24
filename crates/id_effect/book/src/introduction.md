@@ -2,32 +2,30 @@
 
 Welcome to *Typed Effects in Rust*.
 
-You're here because you've written async Rust. You've wrangled `Future`s, battled `Pin`, and accumulated a small mountain of `.await?` chains. Maybe you've built something that works. Maybe it even works well.
+If you already use async Rust, you know the model: `Future`s are polled by an executor; work runs when those futures are driven (for example with `.await`). That foundation is sound, and this book does not ask you to unlearn it.
 
-But something feels off.
+What teams often hit next is **organization at scale**: error types that grow without structure, dependencies threaded through long call chains, and background work whose lifetime is hard to reason about. Those problems are not unique to Rust, but they show up in every non-trivial async codebase.
 
-Your functions take twelve parameters. Your error types are an enum with forty variants. Testing requires a mock factory factory. And every time you refactor, the compiler screams at you for three hours before you figure out which lifetime annotation you forgot.
+**id_effect** is a library for writing async programs where the **shape** of the work—success type, error type, and required environment—is carried in one place, and where much of the program is built as **composable descriptions** (`Effect<A, E, R>`) that you run only when you choose how and with which dependencies.
 
-There's a better way.
-
-This book teaches you **id_effect**, a library for building composable, testable, type-safe async programs in Rust. Instead of functions that *do* things, you'll write functions that *describe* what they want to do. Instead of passing dependencies through every function, you'll declare them in the type signature and let the compiler enforce them. Instead of hoping you remembered to clean up that connection, you'll have guaranteed finalizers that run no matter what.
+You still run on ordinary async runtimes. You still use `.await` inside bridges to third-party code. What changes is how you **structure** domain logic, tests, and dependency boundaries.
 
 ## Who This Book Is For
 
-You should know Rust basics: ownership, borrowing, traits, async/await. You don't need to know category theory, functional programming, or what a monad is. (We'll get there, but gently.)
+You should know Rust basics: ownership, borrowing, traits, and how `async`/`await` and `Future` fit together. You do not need prior experience with category theory or functional programming jargon—we introduce terms only when they help.
 
-If you've ever thought "there has to be a better way to structure this async code," this book is for you.
+If you want a **typed, compositional** style for async Rust—with explicit requirements in the type system and a clear split between “what to run” and “how to run it”—this book is for you.
 
 ## How to Read This Book
 
-**Part I: Foundations** explains *why* effects exist and teaches you the basics. Start here.
+**Part I: Foundations** explains why effects are useful and teaches the core types. Start here.
 
-**Part II: Environment & Dependencies** covers the `R` parameter — the secret weapon for compile-time dependency injection. This is where id_effect really shines.
+**Part II: Environment & Dependencies** covers the `R` parameter and compile-time dependency injection patterns.
 
-**Part III: Real Programs** covers error handling, concurrency, resources, and scheduling — everything you need for production code.
+**Part III: Real Programs** covers error handling, concurrency, resources, and scheduling for production code.
 
-**Part IV: Advanced** dives into STM, streams, schemas, and testing. Read these when you're ready to go deep.
+**Part IV: Advanced** covers STM, streams, schemas, and testing—read when you need those topics.
 
-Code examples are runnable. When you see a code block, you can trust it compiles (unless marked otherwise).
+Code examples are intended to compile unless marked otherwise.
 
 Let's begin.

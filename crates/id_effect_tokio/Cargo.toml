@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_tokio"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Tokio runtime adapter and re-exports for the workspace `effect` crate"
 license = "CC-BY-SA-4.0"
-repository = "https://github.com/Industrial/effect-rs"
+repository = "https://github.com/Industrial/id_effect"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -14,11 +14,16 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_tokio"
+name = "id_effect_tokio"
 
 [dependencies]
-id_effect = { path = "../id_effect", version = "0.1.0" }
-tokio = { version = "1.50.0", features = ["rt", "time", "sync"] }
+id_effect = { path = "../id_effect", version = "0.2.0" }
+tokio = { version = "1.50.0", features = [
+  "rt",
+  "rt-multi-thread",
+  "time",
+  "sync",
+] }
 
 [dev-dependencies]
 pollster = "0.4"

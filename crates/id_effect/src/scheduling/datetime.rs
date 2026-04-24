@@ -826,7 +826,7 @@ mod tests {
 
   #[test]
   fn zoned_civil_accessors_month_day_hour_minute_second() {
-    // 2024-07-04T12:34:56Z  →  ms = 1720096496000
+    // 2024-07-04T12:34:56Z  →  ms = 0.2.096496000
     let ms = 1_720_096_496_000i64;
     let z = ZonedDateTime::unsafe_make(ms, TimeZone::UTC);
     assert_eq!(z.year(), 2024);

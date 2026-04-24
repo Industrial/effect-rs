@@ -12,7 +12,8 @@ workspace:
 tasks:
   format:
     description: 'Format the workspace with treefmt (Rust, Nix, shell, JS/TS, YAML, TOML)'
-    command: 'treefmt'
+    command: 'bash'
+    args: ['scripts/treefmt-moon.sh']
     inputs:
       - 'treefmt.toml'
       - '**/*.rs'
@@ -28,8 +29,8 @@ tasks:
   ci-format:
     description: >-
       Repo-wide format *check* (treefmt CI mode + fail-on-change). Cached so :check/:test can cache-hit; use :format to actually write formatted files.
-    command: 'treefmt'
-    args: ['--ci', '--config-file', 'treefmt.ci.toml']
+    command: 'bash'
+    args: ['scripts/treefmt-moon.sh', '--ci', '--config-file', 'treefmt.ci.toml']
     inputs:
       - 'treefmt.ci.toml'
       - '**/*.rs'
@@ -105,6 +106,8 @@ tasks:
     description: 'Build Rust API documentation with cargo doc'
     command: 'cargo'
     args: ['doc', '--no-deps', '--all-features']
+    env:
+      RUSTDOCFLAGS: '-D warnings'
     inputs:
       - 'Cargo.toml'
       - 'Cargo.lock'

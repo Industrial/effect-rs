@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # E-02  No static service globals
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-static-service-globals
+- id: id_effect-no-static-service-globals
   language: Rust
   severity: error
   message: |
@@ -21,7 +21,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # E-03  No thread_local! for request/fiber context
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-thread-local
+- id: id_effect-no-thread-local
   language: Rust
   severity: error
   message: |
@@ -35,7 +35,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # E-04  .provide() must not be called inside library functions
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-provide-at-edge-not-in-library
+- id: id_effect-provide-at-edge-not-in-library
   language: Rust
   severity: warning
   message: |

@@ -13,6 +13,7 @@ updates:
       - github-actions
     commit-message:
       prefix: "chore(deps)"
+    rebase-strategy: auto
   # Keep Cargo dependencies up to date
   - package-ecosystem: cargo
     directory: /
@@ -26,6 +27,7 @@ updates:
       - rust
     commit-message:
       prefix: "chore(deps)"
+    rebase-strategy: auto
     # Group all patch and minor Cargo updates into a single PR
     groups:
       patch-updates:

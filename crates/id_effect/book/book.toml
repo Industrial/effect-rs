@@ -3,7 +3,6 @@ title = "Typed Effects in Rust"
 authors = ["id_effect contributors"]
 description = "Learn to build composable, testable async programs with id_effect"
 language = "en"
-multilingual = false
 
 [build]
 build-dir = "book"
@@ -21,4 +20,3 @@ line-numbers = true
 [output.html.search]
 enable = true
 limit-results = 30
-use-hierarchical-titles = true

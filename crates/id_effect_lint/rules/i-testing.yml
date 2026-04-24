@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # I-02  run_test result must not be .unwrap()-ed directly
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-run-test-result-must-be-matched
+- id: id_effect-run-test-result-must-be-matched
   language: Rust
   severity: warning
   message: |

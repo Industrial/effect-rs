@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_reqwest"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "CC-BY-SA-4.0"
 description = "reqwest integration for the workspace `effect` crate — HTTP as Effect programs"
-repository = "https://github.com/Industrial/effect-rs"
+repository = "https://github.com/Industrial/id_effect"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -14,24 +14,25 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_reqwest"
+name = "id_effect_reqwest"
 
 [dependencies]
 bytes = "1"
-id_effect = { path = "../id_effect", version = "0.1.0", features = [
+id_effect = { path = "../id_effect", version = "0.2.0", features = [
   "schema-serde",
 ] }
-# `default-features = false` + `rustls-tls`: avoid `native-tls` → ancient `openssl-sys`
+# `default-features = false` + `rustls`: avoid `native-tls` → ancient `openssl-sys`
 # lower bounds that break `cargo update -Z minimal-versions` on OpenSSL 3 (CI / modern Linux).
-reqwest = { version = "0.12", default-features = false, features = [
+# reqwest 0.13 renamed `rustls-tls` → `rustls`.
+reqwest = { version = "0.13", default-features = false, features = [
   "json",
   "gzip",
-  "rustls-tls",
+  "rustls",
 ] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 [dev-dependencies]
-id_effect_tokio = { path = "../id_effect_tokio", version = "0.1.0" }
+id_effect_tokio = { path = "../id_effect_tokio", version = "0.2.0" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 wiremock = "0.6"

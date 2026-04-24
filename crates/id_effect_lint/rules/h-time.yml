@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # H-01  No thread::sleep in domain code
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-thread-sleep-in-domain
+- id: id_effect-no-thread-sleep-in-domain
   language: Rust
   severity: error
   message: |
@@ -26,7 +26,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # H-01b  No thread::sleep in tests (use run_test_with_clock)
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-thread-sleep-in-tests
+- id: id_effect-no-thread-sleep-in-tests
   language: Rust
   severity: error
   message: |
@@ -52,7 +52,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # H-02  No SystemTime::now() / Utc::now() in domain code
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-system-time-in-domain
+- id: id_effect-no-system-time-in-domain
   language: Rust
   severity: warning
   message: |

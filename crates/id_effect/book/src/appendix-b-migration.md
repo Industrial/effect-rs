@@ -1,10 +1,10 @@
-# Migrating from Raw Async — Rust
+# Migrating from `async fn` to effects
 
-This appendix is a practical guide for converting existing async Rust code to id_effect. It covers the most common patterns and their id_effect equivalents, with migration steps for each.
+This appendix is a practical guide for converting existing async Rust code to id_effect. It covers common patterns and their id_effect equivalents, with migration steps for each.
 
 ## The Mental Model Shift
 
-In raw async Rust, functions *do* things:
+In typical async Rust, a function returns a `Future`; when that future is awaited, the work runs:
 
 ```rust
 async fn get_user(id: u64, db: &DbClient) -> Result<User, DbError> {
@@ -12,7 +12,7 @@ async fn get_user(id: u64, db: &DbClient) -> Result<User, DbError> {
 }
 ```
 
-In id_effect, functions *describe* things:
+In id_effect, many domain functions return an **`Effect`**—a description you run later with an environment:
 
 ```rust
 fn get_user<A, E, R>(id: u64) -> Effect<A, E, R>

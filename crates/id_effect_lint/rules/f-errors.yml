@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # F-01  No nested Result<Result<_,_>,_> in public APIs
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-nested-result
+- id: id_effect-no-nested-result
   language: Rust
   severity: error
   message: |
@@ -15,7 +15,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # F-02  No Err(format!()) / Err(e.to_string()) – typed errors only
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-error-collapse-to-string
+- id: id_effect-no-error-collapse-to-string
   language: Rust
   severity: warning
   message: |
@@ -32,7 +32,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # F-03  No .unwrap() / .expect() in Effect-returning functions
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-unwrap-in-effect
+- id: id_effect-no-unwrap-in-effect
   language: Rust
   severity: error
   message: |
@@ -68,7 +68,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # F-04  No panic! / unreachable! / todo! in Effect-returning functions
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-panic-in-effect
+- id: id_effect-no-panic-in-effect
   language: Rust
   severity: warning
   message: |

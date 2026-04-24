@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # K-01  Schema parsing must happen at IO boundaries
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-schema-parsing-at-boundary
+- id: id_effect-schema-parsing-at-boundary
   language: Rust
   severity: warning
   message: |
@@ -24,7 +24,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # K-02  No raw serde derives on domain types exposed in public APIs
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-prefer-schema-over-serde-derive
+- id: id_effect-prefer-schema-over-serde-derive
   language: Rust
   severity: warning
   message: |

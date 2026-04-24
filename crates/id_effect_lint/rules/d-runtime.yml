@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # D-01  run_blocking / run_async only at program entry points
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-run-blocking-only-at-edge
+- id: id_effect-run-blocking-only-at-edge
   language: Rust
   severity: error
   message: |
@@ -42,7 +42,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # D-02  Tests must use run_test, not run_blocking
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-tests-must-use-run-test
+- id: id_effect-tests-must-use-run-test
   language: Rust
   severity: error
   message: |
@@ -67,7 +67,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # D-03  No tokio::spawn
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-tokio-spawn
+- id: id_effect-no-tokio-spawn
   language: Rust
   severity: error
   message: |
@@ -82,7 +82,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # D-04  No std::thread::spawn
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-thread-spawn
+- id: id_effect-no-thread-spawn
   language: Rust
   severity: error
   message: |

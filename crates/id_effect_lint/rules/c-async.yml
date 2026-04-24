@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # C-01  No .await outside from_async
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-no-await-outside-from-async
+- id: id_effect-no-await-outside-from-async
   language: Rust
   severity: error
   message: |
@@ -30,7 +30,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # C-02  Prefer `?` over manual match in from_async bodies
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-prefer-question-mark-in-from-async
+- id: id_effect-prefer-question-mark-in-from-async
   language: Rust
   severity: warning
   message: |

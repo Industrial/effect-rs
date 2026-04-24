@@ -1,8 +1,8 @@
-//! Build a [`FigmentConfigProvider`](effect_config::FigmentConfigProvider) via
-//! [`FigmentProviderLayer`](effect_config::FigmentProviderLayer) and [`id_effect::Layer`].
+//! Build a [`FigmentConfigProvider`](id_effect_config::FigmentConfigProvider) via
+//! [`FigmentProviderLayer`](id_effect_config::FigmentProviderLayer) and [`id_effect::Layer`].
 
-use effect_config::{FigmentProviderLayer, config, figment};
 use id_effect::Layer;
+use id_effect_config::{FigmentProviderLayer, config, figment};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let dir = tempfile::tempdir()?;

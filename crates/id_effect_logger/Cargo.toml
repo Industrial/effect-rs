@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_logger"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "CC-BY-SA-4.0"
 description = "Effect-logging service (forwards to tracing) for effect! / AsyncEffect programs"
-repository = "https://github.com/Industrial/effect-rs"
+repository = "https://github.com/Industrial/id_effect"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -14,16 +14,16 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [lib]
-name = "effect_logger"
+name = "id_effect_logger"
 
 [dependencies]
-id_effect = { path = "../id_effect", version = "0.1.0" }
+id_effect = { path = "../id_effect", version = "0.2.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
 
 [dev-dependencies]
-rstest = "0.23"
+rstest = "0.26"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [[example]]

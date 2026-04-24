@@ -8,7 +8,7 @@
 //!
 //! ```rust
 //! use std::sync::Arc;
-//! use effect_config::{Config, MapConfigProvider, config_env, config, ConfigError};
+//! use id_effect_config::{Config, MapConfigProvider, config_env, config, ConfigError};
 //! use id_effect::run_blocking;
 //!
 //! let p = MapConfigProvider::from_pairs([("HOST", "localhost"), ("PORT", "8080")]);
@@ -40,7 +40,7 @@
 //! Inject the provider via the effect environment and call the free functions directly:
 //!
 //! ```ignore
-//! use effect_config::{read_string, NeedsConfigProvider, ConfigError};
+//! use id_effect_config::{read_string, NeedsConfigProvider, ConfigError};
 //!
 //! fn load_host<A, E, R>() -> ::id_effect::Effect<A, E, R>
 //! where
@@ -95,7 +95,7 @@ pub type ConfigEnv = ::id_effect::Context<
 ///
 /// ```rust
 /// use std::sync::Arc;
-/// use effect_config::{Config, MapConfigProvider, config_env, ConfigError};
+/// use id_effect_config::{Config, MapConfigProvider, config_env, ConfigError};
 /// use id_effect::run_blocking;
 ///
 /// let p = MapConfigProvider::from_pairs([("HOST", "localhost")]);

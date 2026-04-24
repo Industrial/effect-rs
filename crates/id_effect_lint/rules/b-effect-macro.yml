@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # B-01  Chains of 2+ .flat_map should use effect! macro
 # ──────────────────────────────────────────────────────────────────────────────
-- id: effect-rs-multi-step-use-effect-macro
+- id: id_effect-multi-step-use-effect-macro
   language: Rust
   severity: warning
   message: |
@@ -24,7 +24,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Note: ast-grep cannot match the `~expr` unary operator directly because it is
 # parsed as an `unary_expression` node. Rule below is a best-effort pattern.
-- id: effect-rs-postfix-tilde-outside-effect-macro
+- id: id_effect-postfix-tilde-outside-effect-macro
   # ──────────────────────────────────────────────────────────────────────────────
   # B-02  One effect! per top-level Effect-returning function
   # (Enforced by convention; the macro calls themselves are hard to count in
