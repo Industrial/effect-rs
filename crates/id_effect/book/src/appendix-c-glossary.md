@@ -84,6 +84,51 @@ A trait that attaches a canonical `Schema<Self>` to a type. Implement it when a 
 
 ---
 
+**`id_effect_axum`**
+Workspace crate bridging **Axum** handlers to **`Effect`**: `State<R>`, `routing::*`, `execute`, JSON + schema helpers. See [Axum host](./part2/ch07-08-axum-host.md).
+
+---
+
+**`id_effect_config`**
+Workspace crate for **configuration**: `Config<T>` descriptors, Figment/serde extraction, and effectful reads from a provider in `R`. See [Configuration](./part2/ch07-10-config.md).
+
+---
+
+**`id_effect_logger`**
+Workspace crate for an injectable **`EffectLogger`** service and pluggable log backends. See [Logging](./part2/ch07-11-logger.md).
+
+---
+
+**`id_effect_platform`**
+Workspace crate providing **`@effect/platform`-style** HTTP, filesystem, and process **traits** plus Tokio-backed implementations (`HttpClient`, `FileSystem`, `ProcessRuntime`, …). See [Platform I/O](./part2/ch07-06-platform-services.md).
+
+---
+
+**`id_effect_reqwest`**
+Workspace crate: **`reqwest::Client`** as a keyed service, `send` / JSON helpers, optional pools; complements portable HTTP via **`id_effect_platform`**. See [HTTP via reqwest](./part2/ch07-07-reqwest-http.md).
+
+---
+
+**`id_effect_tokio`**
+Workspace crate: **Tokio-backed** `Runtime` integration, re-exports `run_async` / `run_blocking` / `run_fork`, and patterns for **non-`Send`** async graphs (`spawn_blocking_run_async`). See [Tokio bridge](./part2/ch07-05-tokio-bridge.md).
+
+---
+
+**`id_effect_tower`**
+Workspace crate: **`tower::Service`** implementations over effects, with optional **concurrency limits** and **request metrics**. See [Tower service](./part2/ch07-09-tower-service.md).
+
+---
+
+**`id_effect_lint`**
+Custom **rustc lint** crate for id_effect-specific rules; excluded from the default workspace `members` list. See [Workspace tooling](./appendix-d-workspace-tooling.md).
+
+---
+
+**`effect!` macro crates (`id_effect_macro`, `id_effect_proc_macro`)**
+The **`effect!`** do-notation is split between a **proc-macro** crate and a **user-facing** macro crate. See [Workspace tooling](./appendix-d-workspace-tooling.md).
+
+---
+
 **Layer**
 A recipe for constructing one or more services from a set of dependencies. Layers compose with `.stack()` and form a DAG that the runtime resolves automatically. See [What Is a Layer?](./part2/ch06-01-what-is-layer.md).
 
@@ -126,11 +171,6 @@ A value describing how to space out repeated or retried operations. Combinators:
 
 **Schema**
 A value of type `Schema<T>` that describes how to parse an `Unknown` into a `T`. Schemas are composable: build complex schemas from primitive ones. See [Schema Combinators](./part4/ch14-02-combinators.md).
-
----
-
-**`id_effect_platform`**
-Workspace crate providing `@effect/platform`-style **HTTP**, **filesystem**, and **process** traits plus Tokio-backed implementations (`HttpClient`, `FileSystem`, `ProcessRuntime`, …). See [Platform services (stub)](./part2/ch07-05-platform-services.md).
 
 ---
 

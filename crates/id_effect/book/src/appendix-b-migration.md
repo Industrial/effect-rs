@@ -230,6 +230,15 @@ where
 
 The `Scope` finalizer runs whether the inner effect succeeds, fails, or is cancelled. `Drop` doesn't give you that guarantee for async code.
 
+## HTTP boundaries: raw `reqwest` → workspace crates
+
+After effects replace bare `async fn`, move HTTP edges toward **typed services**:
+
+1. **`id_effect_platform`** — introduce **`HttpClient`** + **`HttpClientKey`** when you want **portable** requests and swap implementations (e.g. Wiremock-backed client in tests). Drive with **`id_effect_tokio::run_async`**.
+2. **`id_effect_reqwest`** — when you want **`reqwest::Client`** keyed in **`R`**, **`RequestBuilder`**-style **`send`**, **pools**, or **`json_schema`** decoding—see [HTTP via reqwest](./part2/ch07-07-reqwest-http.md).
+
+Host either style under **Axum** with **`id_effect_axum`** ([Axum host](./part2/ch07-08-axum-host.md)) so handlers stay thin and domain code stays in **`Effect`**.
+
 ## Migration Strategy
 
 Migrate gradually, one module at a time:

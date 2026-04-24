@@ -20,7 +20,7 @@ If you want a **typed, compositional** style for async Rust—with explicit requ
 
 **Part I: Foundations** explains why effects are useful and teaches the core types. Start here.
 
-**Part II: Environment & Dependencies** covers the `R` parameter and compile-time dependency injection patterns.
+**Part II: Environment & Dependencies** covers the `R` parameter and compile-time dependency injection patterns, then walks the **workspace integration crates** (Tokio bridge, platform I/O, reqwest, Axum, Tower, config, logging) so you can wire a real binary without leaving the book.
 
 **Part III: Real Programs** covers error handling, concurrency, resources, and scheduling for production code.
 

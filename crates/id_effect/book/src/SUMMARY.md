@@ -42,7 +42,13 @@
   - [ServiceEnv and service_env](./part2/ch07-02-service-env.md)
   - [Providing Services via Layers](./part2/ch07-03-providing-services.md)
   - [A Complete DI Example](./part2/ch07-04-complete-example.md)
-  - [Platform services (stub)](./part2/ch07-05-platform-services.md)
+  - [Tokio bridge (`id_effect_tokio`)](./part2/ch07-05-tokio-bridge.md)
+  - [Platform I/O (`id_effect_platform`)](./part2/ch07-06-platform-services.md)
+  - [HTTP via reqwest (`id_effect_reqwest`)](./part2/ch07-07-reqwest-http.md)
+  - [Axum host (`id_effect_axum`)](./part2/ch07-08-axum-host.md)
+  - [Tower service (`id_effect_tower`)](./part2/ch07-09-tower-service.md)
+  - [Configuration (`id_effect_config`)](./part2/ch07-10-config.md)
+  - [Logging (`id_effect_logger`)](./part2/ch07-11-logger.md)
 
 # Part III: Real Programs
 
@@ -95,3 +101,4 @@
 - [API Quick Reference](./appendix-a-api-reference.md)
 - [Migrating from `async fn` to effects](./appendix-b-migration.md)
 - [Glossary](./appendix-c-glossary.md)
+- [Workspace tooling (macros and lints)](./appendix-d-workspace-tooling.md)

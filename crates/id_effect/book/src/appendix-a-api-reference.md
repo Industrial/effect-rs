@@ -136,3 +136,20 @@ A condensed reference for the most commonly used types and functions in id_effec
 | `ctx!(Key => value, …)` | Build a `Context` from key-value pairs |
 | `service_key!(Name: Type)` | Declare a service key |
 | `pipe!(v, f, g, …)` | Pipeline for pure values |
+
+## Workspace crates (beyond `id_effect`)
+
+| Crate | Role | Book | Docs |
+|-------|------|------|------|
+| `id_effect` | Core `Effect`, `Stream`, `Stm`, schema, fibers, … | Parts I–IV | `cargo doc -p id_effect` |
+| `id_effect_tokio` | Tokio `Runtime`, `run_async` wiring, `spawn_blocking_run_async` | [Tokio bridge](./part2/ch07-05-tokio-bridge.md) | `cargo doc -p id_effect_tokio` |
+| `id_effect_platform` | HTTP / FS / process **ports** + live + test impls | [Platform I/O](./part2/ch07-06-platform-services.md) | `cargo doc -p id_effect_platform` |
+| `id_effect_reqwest` | `reqwest::Client` as a service; pools; JSON + schema | [HTTP via reqwest](./part2/ch07-07-reqwest-http.md) | `cargo doc -p id_effect_reqwest` |
+| `id_effect_axum` | Axum handlers + `State<R>` bridge | [Axum host](./part2/ch07-08-axum-host.md) | `cargo doc -p id_effect_axum` |
+| `id_effect_tower` | `tower::Service` over effects | [Tower service](./part2/ch07-09-tower-service.md) | `cargo doc -p id_effect_tower` |
+| `id_effect_config` | Config descriptors, Figment, provider in `R` | [Configuration](./part2/ch07-10-config.md) | `cargo doc -p id_effect_config` |
+| `id_effect_logger` | Injectable `EffectLogger` | [Logging](./part2/ch07-11-logger.md) | `cargo doc -p id_effect_logger` |
+| `id_effect_macro` / `id_effect_proc_macro` | `effect!` implementation split | [Workspace tooling](./appendix-d-workspace-tooling.md) | `cargo doc -p id_effect_macro` |
+| `id_effect_lint` | Custom rustc lint (excluded from default workspace) | [Workspace tooling](./appendix-d-workspace-tooling.md) | build crate explicitly |
+
+For a single local index, run `cargo doc --workspace --no-deps` from the repository root (see each crate’s `README` for optional examples).
