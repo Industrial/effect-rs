@@ -61,6 +61,9 @@ A condensed reference for the most commonly used types and functions in id_effec
 | `fiber_ref.get()` | Read current fiber's value |
 | `fiber_ref.set(v)` | Set current fiber's value |
 | `with_fiber_id(id, f)` | Run `f` with a specific fiber id |
+| `Supervisor::attach(scope)` | Fork child scope; cancel token when child closes |
+| `supervised(&sup, policy, clock, make)` | Run `make` under restart / limit / ignore policy |
+| `Supervisor::spawn(rt, …)` | `run_fork` + `supervised` on a worker |
 
 ## STM
 

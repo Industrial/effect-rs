@@ -18,6 +18,10 @@
 - Distributed supervision across machines (that is Phase G territory).
 - Magic recovery from `panic!` inside `std` (document that unwinding may still abort depending on runtime).
 
+## Implementation (shipped)
+
+Core API lives in `crates/id_effect/src/concurrency/supervisor.rs` (`Supervisor`, `SupervisorPolicy`, `supervised`, `Supervisor::spawn`), with module tests following `TESTING.md` (nested `#[cfg(test)]` trees, BDD-style names, `TestClock` for backoff without flakes). User-facing narrative: mdBook **§9.5 Supervision** (`crates/id_effect/book/src/part3/ch09-05-supervision.md`). Optional lint **iep-f-031** remains a future chore.
+
 ---
 
 ## Three-level Beads task tree

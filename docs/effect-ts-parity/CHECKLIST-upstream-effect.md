@@ -21,7 +21,7 @@
 | `@effect/sql` | Database | *Planned Phase C* | |
 | `@effect/rpc` | RPC | *Planned Phase D* | |
 | `@effect/cli` | CLI | *Planned Phase E* | |
-| Supervision | Fiber supervision | *Planned Phase F* | |
+| Supervision | Fiber supervision | `crates/id_effect/src/concurrency/supervisor.rs`, mdBook §9.5 | Reviewed |
 | Cluster / workflow | Distributed | *Planned Phase G* | |
 | `@effect/ai` | LLM clients | *Planned Phase H* | |
 

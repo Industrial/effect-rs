@@ -62,6 +62,7 @@
   - [Spawning and Joining](./part3/ch09-02-spawning-joining.md)
   - [Cancellation](./part3/ch09-03-cancellation.md)
   - [FiberRef](./part3/ch09-04-fiberref.md)
+  - [Supervision](./part3/ch09-05-supervision.md)
 - [Resources & Scopes](./part3/ch10-00-resources.md)
   - [The Resource Problem](./part3/ch10-01-resource-problem.md)
   - [Scopes and Finalizers](./part3/ch10-02-scopes-finalizers.md)

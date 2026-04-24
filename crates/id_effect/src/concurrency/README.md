@@ -10,6 +10,7 @@
 | `cancel` | `CancellationToken`, `check_interrupt` — cooperative interrupt. |
 | `fiber_handle` | `FiberHandle`, `fiber_all`, `interrupt_all`, `fiber_succeed`, … |
 | `fiber_ref` | `FiberRef`, `with_fiber_id` — fiber-scoped mutable state (like thread-locals). |
+| `supervisor` | `Supervisor`, `SupervisorPolicy`, `supervised` — scope-linked restart and backoff. |
 | `async_notify` | Internal wait/notify helpers (not the primary API surface). |
 
 ## What it is used for
@@ -17,6 +18,7 @@
 - **Forking** work with observable completion and typed errors (`FiberHandle`).
 - **Propagating** shutdown or timeouts through `CancellationToken`.
 - **Attaching** per-fiber diagnostics or context in `FiberRef` (e.g. tracing).
+- **Supervising** long-lived workers with [`supervisor`](supervisor.rs) policies and [`Scope`](../resource/README.md) shutdown.
 
 ## Best practices
 

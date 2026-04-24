@@ -85,8 +85,8 @@ pub use collections::{
   MutableHashMap, MutableHashSet, MutableList, MutableQueue, RedBlackTree, Trie,
 };
 pub use concurrency::{
-  CancellationToken, FiberHandle, FiberId, FiberRef, FiberStatus, check_interrupt, fiber_all,
-  fiber_never, fiber_succeed, interrupt_all, with_fiber_id,
+  CancellationToken, FiberHandle, FiberId, FiberRef, FiberStatus, Supervisor, SupervisorPolicy,
+  check_interrupt, fiber_all, fiber_never, fiber_succeed, interrupt_all, supervised, with_fiber_id,
 };
 pub use context::{
   Cons, Context, Get, GetMut, HasTag, Here, Matcher, Nil, Skip0, Skip1, Skip2, Skip3, Skip4, Tag,

@@ -7,6 +7,7 @@
 //! | [`fiber_id`] | [`FiberId`] branded `u64` | `std::sync::atomic` only |
 //! | [`cancel`] | [`CancellationToken`], [`check_interrupt`] | Stratum 6 (`runtime::Never`, `runtime::run_*`), `async_notify` |
 //! | [`fiber_handle`] | [`FiberHandle`], [`FiberStatus`], fiber utilities | Stratum 6 (`runtime::{run_blocking, run_async, Never}`), Stratum 4 (`failure::{Cause,Exit}`), [`fiber_id`] (this stratum), `deferred`, `scope` |
+//! | [`supervisor`] | [`Supervisor`], [`SupervisorPolicy`], [`supervised`] | [`Scope`], [`CancellationToken`], [`scheduling`](crate::scheduling), [`failure::Cause`](crate::failure::Cause) |
 //!
 //! ## Design
 //!
@@ -39,6 +40,7 @@ pub mod cancel;
 pub mod fiber_handle;
 pub mod fiber_id;
 pub mod fiber_ref;
+pub mod supervisor;
 
 pub use cancel::{CancellationToken, check_interrupt};
 pub use fiber_handle::{
@@ -46,3 +48,4 @@ pub use fiber_handle::{
 };
 pub use fiber_id::FiberId;
 pub use fiber_ref::{FiberRef, with_fiber_id};
+pub use supervisor::{Supervisor, SupervisorPolicy, supervised};
