@@ -178,10 +178,7 @@ where
               SupervisorPolicy::Restart { schedule } => {
                 let sched = schedule_restart.get_or_insert_with(|| schedule.clone());
                 if let Some(sleep_eff) = sched.next_sleep(&clock, ScheduleInput { attempt }) {
-                  match sleep_eff.run(&mut ()).await {
-                    Ok(()) => {}
-                    Err(never) => match never {},
-                  }
+                  sleep_eff.run(&mut ()).await.unwrap();
                   attempt = attempt.saturating_add(1);
                   continue;
                 } else {
@@ -201,10 +198,7 @@ where
                 });
                 let sched = schedule_limited.get_or_insert_with(|| schedule.clone());
                 if let Some(sleep_eff) = sched.next_sleep(&clock, ScheduleInput { attempt }) {
-                  match sleep_eff.run(&mut ()).await {
-                    Ok(()) => {}
-                    Err(never) => match never {},
-                  }
+                  sleep_eff.run(&mut ()).await.unwrap();
                   restarts_used = restarts_used.saturating_add(1);
                   attempt = attempt.saturating_add(1);
                   continue;
@@ -350,6 +344,24 @@ mod tests {
         assert_eq!(out, 42);
         assert_eq!(n.load(Ordering::SeqCst), 3);
       }
+
+      #[tokio::test]
+      async fn escalates_when_schedule_exhausted_with_recurs_zero() {
+        let sup = Supervisor::detached();
+        let out = run_async(
+          supervised(
+            &sup,
+            SupervisorPolicy::Restart {
+              schedule: Schedule::recurs(0),
+            },
+            TestClock::new(Instant::now()),
+            || fail::<u8, &'static str, ()>("once"),
+          ),
+          (),
+        )
+        .await;
+        assert_eq!(out, Err(Cause::Fail("once")));
+      }
     }
 
     mod restart_with_limit {
@@ -414,6 +426,25 @@ mod tests {
         assert!(out.is_err());
         assert_eq!(n.load(Ordering::SeqCst), 51);
       }
+
+      #[tokio::test]
+      async fn escalates_when_schedule_exhausted_before_limit_with_recurs_zero() {
+        let sup = Supervisor::detached();
+        let out = run_async(
+          supervised(
+            &sup,
+            SupervisorPolicy::RestartWithLimit {
+              limit: 5,
+              schedule: Schedule::recurs(0),
+            },
+            TestClock::new(Instant::now()),
+            || fail::<u8, &'static str, ()>("sched-done"),
+          ),
+          (),
+        )
+        .await;
+        assert_eq!(out, Err(Cause::Fail("sched-done")));
+      }
     }
 
     mod ignore {
@@ -458,6 +489,34 @@ mod tests {
     }
   }
 
+  mod supervisor_from_parts {
+    use super::*;
+
+    #[tokio::test]
+    async fn from_parts_creates_supervisor_with_given_scope_and_token() {
+      let scope = Scope::make();
+      let token = CancellationToken::new();
+      let sup = Supervisor::from_parts(scope, token.clone());
+      assert!(!sup.token().is_cancelled());
+      // scope() is accessible and functional: add a finalizer and close it
+      sup.scope().close();
+      // token passed in is the same token tracked by the supervisor
+      token.cancel();
+      assert!(sup.token().is_cancelled());
+    }
+  }
+
+  mod supervisor_detached_finalizer {
+    use super::*;
+
+    #[test]
+    fn closing_detached_scope_cancels_token_via_finalizer() {
+      let sup = Supervisor::detached();
+      assert!(!sup.token().is_cancelled());
+      sup.scope().close();
+      assert!(sup.token().is_cancelled());
+    }
+  }
   mod supervisor_spawn {
     use super::*;
     use crate::runtime::ThreadSleepRuntime;
