@@ -131,6 +131,16 @@ impl TestFileSystem {
     }
   }
 
+  #[cfg(test)]
+  fn poison_inner_mutex(&self) {
+    let inner = Arc::clone(&self.inner);
+    let handle = std::thread::spawn(move || {
+      let _guard = inner.lock().expect("lock");
+      panic!("test mutex poison");
+    });
+    assert!(handle.join().is_err());
+  }
+
   fn key(path: &Path) -> Result<String, FsError> {
     let s = path
       .to_str()
@@ -358,6 +368,50 @@ mod tests {
       fn succeeds_without_mutating_store() {
         let fs = TestFileSystem::new();
         run_blocking(fs.create_dir_all(Path::new("any/nested")), ()).unwrap();
+      }
+    }
+
+    mod poisoned_mutex {
+      use super::*;
+
+      #[test]
+      fn read_maps_lock_poison_to_path_not_allowed() {
+        let fs = TestFileSystem::new();
+        fs.poison_inner_mutex();
+        let err = run_blocking(fs.read(Path::new("ok.txt")), ()).unwrap_err();
+        assert!(matches!(err, FsError::PathNotAllowed(_)));
+      }
+
+      #[test]
+      fn write_maps_lock_poison_to_path_not_allowed() {
+        let fs = TestFileSystem::new();
+        fs.poison_inner_mutex();
+        let err = run_blocking(fs.write(Path::new("ok.txt"), b"x"), ()).unwrap_err();
+        assert!(matches!(err, FsError::PathNotAllowed(_)));
+      }
+
+      #[test]
+      fn append_maps_lock_poison_to_path_not_allowed() {
+        let fs = TestFileSystem::new();
+        fs.poison_inner_mutex();
+        let err = run_blocking(fs.append(Path::new("ok.txt"), b"x"), ()).unwrap_err();
+        assert!(matches!(err, FsError::PathNotAllowed(_)));
+      }
+
+      #[test]
+      fn remove_file_maps_lock_poison_to_path_not_allowed() {
+        let fs = TestFileSystem::new();
+        fs.poison_inner_mutex();
+        let err = run_blocking(fs.remove_file(Path::new("ok.txt")), ()).unwrap_err();
+        assert!(matches!(err, FsError::PathNotAllowed(_)));
+      }
+
+      #[test]
+      fn metadata_len_maps_lock_poison_to_path_not_allowed() {
+        let fs = TestFileSystem::new();
+        fs.poison_inner_mutex();
+        let err = run_blocking(fs.metadata_len(Path::new("ok.txt")), ()).unwrap_err();
+        assert!(matches!(err, FsError::PathNotAllowed(_)));
       }
     }
   }

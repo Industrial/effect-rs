@@ -248,9 +248,31 @@ mod tests {
     }
 
     #[test]
+    fn body_too_large_source_is_none() {
+      let e = HttpError::BodyTooLarge { len: 1, max: 0 };
+      assert!(std::error::Error::source(&e).is_none());
+    }
+
+    #[test]
     fn invalid_request_displays_message() {
       let e = HttpError::InvalidRequest("missing host".into());
       assert!(e.to_string().contains("missing host"));
+    }
+
+    #[test]
+    fn invalid_request_source_is_none() {
+      let e = HttpError::InvalidRequest("x".into());
+      assert!(std::error::Error::source(&e).is_none());
+    }
+
+    #[tokio::test]
+    async fn reqwest_variant_display_and_source_chain() {
+      let inner = reqwest::get("http://127.0.0.1:1/nope")
+        .await
+        .expect_err("port 1 should refuse connection");
+      let err = HttpError::from(inner);
+      assert!(err.to_string().starts_with("http request failed:"));
+      assert!(std::error::Error::source(&err).is_some());
     }
   }
 
@@ -264,9 +286,29 @@ mod tests {
     }
 
     #[test]
+    fn io_source_returns_underlying() {
+      let inner = std::io::Error::other("inner");
+      let e = FsError::Io(inner);
+      assert!(std::error::Error::source(&e).is_some());
+    }
+
+    #[test]
     fn path_not_allowed_displays_reason() {
       let e = FsError::PathNotAllowed("traversal".into());
       assert!(e.to_string().contains("traversal"));
+    }
+
+    #[test]
+    fn path_not_allowed_source_is_none() {
+      let e = FsError::PathNotAllowed("p".into());
+      assert!(std::error::Error::source(&e).is_none());
+    }
+
+    #[test]
+    fn from_io_error_maps_to_io_variant() {
+      let io = std::io::Error::new(std::io::ErrorKind::Interrupted, "i");
+      let e: FsError = io.into();
+      assert!(matches!(e, FsError::Io(_)));
     }
   }
 
@@ -280,10 +322,30 @@ mod tests {
     }
 
     #[test]
+    fn spawn_failed_source_is_none() {
+      let e = ProcessError::SpawnFailed("x".into());
+      assert!(std::error::Error::source(&e).is_none());
+    }
+
+    #[test]
     fn io_wraps_underlying() {
       let inner = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "denied");
       let e = ProcessError::Io(inner);
       assert!(e.to_string().contains("denied"));
+    }
+
+    #[test]
+    fn io_source_returns_underlying() {
+      let inner = std::io::Error::other("o");
+      let e = ProcessError::Io(inner);
+      assert!(std::error::Error::source(&e).is_some());
+    }
+
+    #[test]
+    fn from_io_error_maps_to_io_variant() {
+      let io = std::io::Error::new(std::io::ErrorKind::AlreadyExists, "e");
+      let e: ProcessError = io.into();
+      assert!(matches!(e, ProcessError::Io(_)));
     }
   }
 }
