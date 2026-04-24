@@ -22,6 +22,7 @@ Workspace effects are intentionally **not `Send`** in the general case. Axum han
 
 ## Further reading
 
+- [RPC boundaries](./ch07-12-rpc-boundaries.md) — `id_effect_rpc` envelopes, correlation ids, tracing
 - `cargo doc --open -p id_effect_axum`
 - Examples: `cargo run -p id_effect_axum --example 010_routing_hello`
 - [Tokio bridge](./ch07-05-tokio-bridge.md) for interpreter semantics; [Tower](./ch07-09-tower-service.md) for generic `Service` composition without Axum.

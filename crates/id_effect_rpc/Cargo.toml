@@ -1,0 +1,37 @@
+[package]
+name = "id_effect_rpc"
+version = "0.2.0"
+edition = "2024"
+license = "CC-BY-SA-4.0"
+description = "RPC-style HTTP envelopes, correlation ids, and tracing helpers for id_effect Axum hosts"
+repository = "https://github.com/Industrial/id_effect"
+readme = "README.md"
+
+[lints.rust]
+unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+
+[lib]
+name = "id_effect_rpc"
+
+[dependencies]
+axum = { version = "0.8", features = ["json"] }
+http = "1"
+id_effect = { path = "../id_effect", version = "0.2.0", features = [
+  "schema-serde",
+] }
+id_effect_axum = { path = "../id_effect_axum", version = "0.2.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+http-body-util = "0.1"
+rstest = "0.26"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tower = { version = "0.5", features = ["util"] }
+
+[[example]]
+name = "010_json_greet"
+path = "examples/010_json_greet.rs"

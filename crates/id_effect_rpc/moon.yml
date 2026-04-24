@@ -1,0 +1,88 @@
+# https://moonrepo.dev/docs/config/project
+language: 'rust'
+layer: 'library'
+tasks:
+  check:
+    deps: ['effect:ci-format', '^:check']
+    command:
+      - cargo
+      - check
+      - -p
+      - id_effect_rpc
+      - --all-targets
+      - --all-features
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  clippy:
+    deps: ['^:clippy', '~:check']
+    command:
+      - cargo
+      - clippy
+      - -p
+      - id_effect_rpc
+      - --all-targets
+      - --all-features
+      - --
+      - -D
+      - warnings
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  test:
+    deps: ['^:test', '~:clippy']
+    command:
+      - cargo
+      - nextest
+      - run
+      - -p
+      - id_effect_rpc
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  build:
+    deps: ['^:build', '~:test']
+    command:
+      - cargo
+      - build
+      - -p
+      - id_effect_rpc
+      - --all-targets
+      - --all-features
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  examples:
+    description: 'Build id_effect_rpc example binaries (requires features examples)'
+    deps: ['~:test']
+    command: 'bash'
+    args:
+      - '../../scripts/moon-run-crate-examples.sh'
+      - 'id_effect_rpc'
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure

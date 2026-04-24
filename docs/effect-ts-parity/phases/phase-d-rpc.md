@@ -4,6 +4,8 @@
 **Effect.ts reference:** `@effect/rpc` — schemas, request/response contracts, protocol handlers.  
 **Goal:** Document and optionally implement **RPC-style** communication where **`Effect`**, **`R`**, and **errors** cross process boundaries in a disciplined way—starting with **patterns** on top of existing Rust stacks, evolving toward **codegen** if justified.
 
+**Implementation status (workspace):** Stages **D1** (mdBook + comparison + Axum JSON example) and **D2** (`id_effect_rpc` crate: `RpcError`, correlation ids, tracing span helpers, tests) are implemented in-tree. Stage **D3** (codegen) remains optional backlog (`iep-d-030` / `iep-d-031`).
+
 ## Executive summary
 
 Effect.ts RPC ties **Schema**, **Layer**, and **platform HTTP** together. In Rust, the nearest ecosystem is **`tonic` + `prost`**, **`tarpc`**, or custom HTTP+JSON. Phase D is intentionally **staged**:

@@ -6,6 +6,7 @@ projects:
   id_effect_opentelemetry: crates/id_effect_opentelemetry
   id_effect_platform: crates/id_effect_platform
   id_effect_axum: crates/id_effect_axum
+  id_effect_rpc: crates/id_effect_rpc
   id_effect_config: crates/id_effect_config
   id_effect_logger: crates/id_effect_logger
   id_effect_macro: crates/id_effect_macro
