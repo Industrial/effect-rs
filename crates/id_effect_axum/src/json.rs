@@ -134,4 +134,13 @@ mod tests {
       "expected path to mention age, got {path:?} full={v:?}"
     );
   }
+
+  #[test]
+  fn decode_json_schema_syntax_error_is_bad_request() {
+    let schema = Arc::new(schema::string::<()>());
+    let err = decode_json_schema(schema.as_ref(), b"not-json-at-all").expect_err("syntax");
+    assert!(matches!(err, JsonSchemaError::Syntax(_)));
+    let resp = err.into_response();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+  }
 }
