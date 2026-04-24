@@ -28,7 +28,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract version from tag or input
         id: version
         run: |
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [verify-versions]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
@@ -97,7 +97,7 @@ jobs:
     needs: [test]
     environment: crates-io
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
@@ -127,7 +127,7 @@ jobs:
     needs: [publish-level-0]
     environment: crates-io
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
@@ -150,7 +150,7 @@ jobs:
     needs: [publish-level-1]
     environment: crates-io
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
@@ -183,7 +183,7 @@ jobs:
     needs: [publish-level-2]
     environment: crates-io
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
       - name: Cache
@@ -235,7 +235,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Create GitHub Release
