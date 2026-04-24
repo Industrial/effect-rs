@@ -1,0 +1,8 @@
+# Pin the Effect.ts / effect package version used for the last parity review.
+# Format: one line, e.g.
+#   effect@3.12.0
+# or a git SHA of Effect-TS/effect if you track mainline.
+#
+# Last reviewed: (unset)
+
+effect@TBD

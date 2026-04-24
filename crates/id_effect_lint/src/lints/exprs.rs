@@ -226,16 +226,7 @@ pub fn check_no_panic_in_effect(
 }
 
 // ─── G-01: Fork must be joined ────────────────────────────────────────────────
-
-pub fn check_fork_must_be_joined(cx: &LateContext<'_>, expr: &rustc_hir::Expr<'_>) {
-  // Detect `.fork()` calls whose result is immediately discarded (statement position).
-  // We check the parent; if the call is in `ExprStmt` without a `let` binding, it's dropped.
-  if let ExprKind::MethodCall(seg, _, _, _) = &expr.kind {
-    if seg.ident.name.as_str() == "fork" {
-      // The parent check is handled at the statement level (check_stmt).
-    }
-  }
-}
+// Detection is in `check_fork_result_discarded` (statement-level); see `check_stmt`.
 
 /// Called from `check_stmt` – flag a `.fork()` result discarded as a statement.
 pub fn check_fork_result_discarded(cx: &LateContext<'_>, stmt: &rustc_hir::Stmt<'_>) {

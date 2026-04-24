@@ -1,5 +1,5 @@
 use rustc_hir::intravisit::FnKind;
-use rustc_hir::{AmbigArg, FnDecl, FnRetTy, IsAsync, QPath, TyKind, WherePredicateKind};
+use rustc_hir::{FnDecl, FnRetTy, IsAsync, QPath, TyKind, WherePredicateKind};
 use rustc_lint::LateContext;
 use rustc_span::Symbol;
 
@@ -43,6 +43,7 @@ pub fn is_async_fn_kind(kind: &FnKind<'_>) -> bool {
 // Test-context helpers
 // ──────────────────────────────────────────────────────────
 
+#[allow(deprecated)] // TyCtxt::get_attrs: replace with find_attr! / hir attrs when MSRV allows
 pub fn in_test_context(cx: &LateContext<'_>, def_id: rustc_hir::def_id::LocalDefId) -> bool {
   use rustc_span::sym;
   let mut hir_id = cx.tcx.local_def_id_to_hir_id(def_id);
@@ -143,37 +144,6 @@ pub fn is_macro_call_named(expr: &rustc_hir::Expr<'_>, name: &str) -> bool {
     }
   }
   false
-}
-
-/// `true` iff any path segment in the callee matches `segment`.
-pub fn path_contains_segment(expr: &rustc_hir::Expr<'_>, segment: &str) -> bool {
-  match &expr.kind {
-    rustc_hir::ExprKind::Path(QPath::Resolved(_, path)) => path
-      .segments
-      .iter()
-      .any(|s| s.ident.name.as_str() == segment),
-    _ => false,
-  }
-}
-
-/// `true` iff the path's last segment is `name`.
-pub fn path_last_is(expr: &rustc_hir::Expr<'_>, name: &str) -> bool {
-  if let rustc_hir::ExprKind::Path(QPath::Resolved(_, path)) = &expr.kind {
-    return path
-      .segments
-      .last()
-      .map_or(false, |s| s.ident.name.as_str() == name);
-  }
-  false
-}
-
-// ──────────────────────────────────────────────────────────
-// Type-structure helpers (unambiguous ty)
-// ──────────────────────────────────────────────────────────
-
-/// Like `ty_last_segment_is` but accepts `Ty<'_, AmbigArg>` from `check_ty`.
-pub fn ambig_ty_last_segment_is(ty: &rustc_hir::Ty<'_, AmbigArg>, name: &str) -> bool {
-  ty_last_segment_is(ty.as_unambig_ty(), name)
 }
 
 pub fn contains_rc_refcell(ty: &rustc_hir::Ty<'_>) -> bool {

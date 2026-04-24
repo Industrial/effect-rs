@@ -9,6 +9,15 @@
 //! - Optional: [`json_schema`] decodes JSON bodies via [`Schema::decode_unknown`](id_effect::schema::Schema::decode_unknown)
 //!   so [`id_effect::schema::ParseError`] carries field paths.
 //!
+//! ## Relation to `id_effect_platform` (portable HTTP)
+//!
+//! For **`@effect/platform`-style** boundaries—typed `HttpClient` in `R` instead of raw
+//! [`reqwest::Client`]—add the workspace crate **`id_effect_platform`** and use its
+//! `http` module (`HttpClientKey`, `execute`, `ReqwestHttpClient`, …). This crate remains the home
+//! for **reqwest-specific** helpers (pools, JSON+[`Schema`](id_effect::schema::Schema), …). Prefer the
+//! platform HTTP layer for new application code; keep [`send`](send) when you already have a
+//! [`RequestBuilder`](RequestBuilder) pipeline.
+//!
 //! ## Relation to `id_effect_tokio`
 //!
 //! This crate depends only on **`effect`** (and `reqwest`). Async HTTP steps are ordinary

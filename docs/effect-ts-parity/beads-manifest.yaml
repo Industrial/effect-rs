@@ -1,0 +1,734 @@
+# Machine-readable task tree for Effect.ts parity phases.
+# Conventions: see CONVENTIONS.md
+#
+# Import strategy:
+# 1) Create epics for each phase (filter type: epic), record bd-* ids.
+# 2) For each non-epic task, bd create "<title>" -t <type> -p <priority> --parent <PHASE_BD_ID>
+# 3) For each depends_on edge [blocker], run: bd dep add <task_bd_id> <blocker_bd_id>
+#
+# Slugs are stable; map slug -> bd-* in your notes after creation.
+version: 1
+schema: id-effect-parity-beads-v1
+# Map phase letter -> epic slug (create these epics first; other tasks use --parent <bd-id>).
+phase_epics:
+  A: iep-a-000
+  B: iep-b-000
+  C: iep-c-000
+  D: iep-d-000
+  E: iep-e-000
+  F: iep-f-000
+  G: iep-g-000
+  H: iep-h-000
+  I: iep-i-000
+tasks:
+  # ─── Phase A ─────────────────────────────────────────────────────────────
+  - slug: iep-a-000
+    phase: A
+    title: "Phase A — Unified platform layer (Effect @effect/platform parity)"
+    type: epic
+    priority: 1
+    depends_on: []
+  - slug: iep-a-010
+    phase: A
+    title: "Platform phase — design RFC (traits, error taxonomy, crate layout)"
+    type: task
+    priority: 1
+    depends_on: []
+  - slug: iep-a-011
+    phase: A
+    title: "Add workspace member crate id_effect_platform (skeleton)"
+    type: task
+    priority: 1
+    depends_on: [iep-a-010]
+  - slug: iep-a-012
+    phase: A
+    title: "Define PlatformError / HttpError / FsError hierarchy and From bridges"
+    type: feature
+    priority: 1
+    depends_on: [iep-a-011]
+  - slug: iep-a-013
+    phase: A
+    title: "Book stub chapter Platform services + glossary entries"
+    type: chore
+    priority: 2
+    depends_on: [iep-a-010]
+  - slug: iep-a-020
+    phase: A
+    title: "HttpClient trait — request/response, timeouts, redirect hooks"
+    type: feature
+    priority: 1
+    depends_on: [iep-a-012]
+  - slug: iep-a-021
+    phase: A
+    title: "Reqwest-backed HttpClient + Layer constructor"
+    type: feature
+    priority: 1
+    depends_on: [iep-a-020]
+  - slug: iep-a-022
+    phase: A
+    title: "Chunked/streaming HTTP responses mapped to Stream/Chunk (MVP)"
+    type: task
+    priority: 2
+    depends_on: [iep-a-021]
+  - slug: iep-a-023
+    phase: A
+    title: "HTTP client integration tests with mock server"
+    type: task
+    priority: 2
+    depends_on: [iep-a-021]
+  - slug: iep-a-024
+    phase: A
+    title: "Deprecation/shim plan for direct id_effect_reqwest in examples"
+    type: chore
+    priority: 3
+    depends_on: [iep-a-021]
+  - slug: iep-a-030
+    phase: A
+    title: "FileSystem trait — read/write/metadata/create_dir/remove"
+    type: feature
+    priority: 1
+    depends_on: [iep-a-012]
+  - slug: iep-a-031
+    phase: A
+    title: "Tokio-backed LiveFileSystem + Layer"
+    type: feature
+    priority: 1
+    depends_on: [iep-a-030]
+  - slug: iep-a-032
+    phase: A
+    title: "In-memory TestFileSystem for deterministic tests"
+    type: feature
+    priority: 2
+    depends_on: [iep-a-030]
+  - slug: iep-a-033
+    phase: A
+    title: "Security guidelines for FS (path traversal, symlinks)"
+    type: chore
+    priority: 2
+    depends_on: [iep-a-030]
+  - slug: iep-a-040
+    phase: A
+    title: "Process/Command trait — spawn, stdio, exit status"
+    type: feature
+    priority: 2
+    depends_on: [iep-a-012]
+  - slug: iep-a-041
+    phase: A
+    title: "Tokio process implementation + cancellation integration"
+    type: feature
+    priority: 2
+    depends_on: [iep-a-040]
+  - slug: iep-a-042
+    phase: A
+    title: "Process service CI tests (echo/cat pattern)"
+    type: task
+    priority: 2
+    depends_on: [iep-a-041]
+  - slug: iep-a-050
+    phase: A
+    title: "Normalize path types (Utf8Path vs Path) in public API"
+    type: task
+    priority: 3
+    depends_on: [iep-a-030]
+  - slug: iep-a-051
+    phase: A
+    title: "Optional URI builder helper for HttpClient (feature-gated)"
+    type: chore
+    priority: 4
+    depends_on: [iep-a-020]
+  - slug: iep-a-060
+    phase: A
+    title: "CI matrix — id_effect_platform"
+    type: chore
+    priority: 1
+    depends_on: [iep-a-021, iep-a-031]
+  - slug: iep-a-061
+    phase: A
+    title: "crates.io metadata + README badges for id_effect_platform"
+    type: chore
+    priority: 3
+    depends_on: [iep-a-060]
+  - slug: iep-a-062
+    phase: A
+    title: "Migrate one official example to platform traits only"
+    type: task
+    priority: 2
+    depends_on: [iep-a-021, iep-a-031]
+  # ─── Phase B ─────────────────────────────────────────────────────────────
+  - slug: iep-b-000
+    phase: B
+    title: "Phase B — OpenTelemetry integration (@effect/opentelemetry parity)"
+    type: epic
+    priority: 1
+    depends_on: []
+  - slug: iep-b-010
+    phase: B
+    title: "Audit observability module vs OTEL (trace, span, baggage)"
+    type: task
+    priority: 1
+    depends_on: []
+  - slug: iep-b-011
+    phase: B
+    title: "RFC — id_effect_opentelemetry boundaries and feature flags"
+    type: task
+    priority: 1
+    depends_on: [iep-b-010]
+  - slug: iep-b-012
+    phase: B
+    title: "Spike — minimal trace from with_span to in-memory exporter"
+    type: task
+    priority: 2
+    depends_on: [iep-b-011]
+  - slug: iep-b-020
+    phase: B
+    title: "Add id_effect_opentelemetry crate skeleton (gated deps)"
+    type: task
+    priority: 1
+    depends_on: [iep-b-011]
+  - slug: iep-b-021
+    phase: B
+    title: "Span bridge — with_span to OTEL spans + parent context"
+    type: feature
+    priority: 1
+    depends_on: [iep-b-020]
+  - slug: iep-b-022
+    phase: B
+    title: "W3C traceparent propagation helpers for HTTP"
+    type: feature
+    priority: 1
+    depends_on: [iep-b-021]
+  - slug: iep-b-023
+    phase: B
+    title: "Fiber boundary — child fibers inherit span context"
+    type: task
+    priority: 1
+    depends_on: [iep-b-021]
+  - slug: iep-b-024
+    phase: B
+    title: "Regression tests — nested spans + fork/join"
+    type: task
+    priority: 2
+    depends_on: [iep-b-023]
+  - slug: iep-b-030
+    phase: B
+    title: "Map Metric counters to OTEL instruments (MVP)"
+    type: feature
+    priority: 2
+    depends_on: [iep-b-020]
+  - slug: iep-b-031
+    phase: B
+    title: "Histogram support for effect region latency"
+    type: feature
+    priority: 3
+    depends_on: [iep-b-030]
+  - slug: iep-b-032
+    phase: B
+    title: "Document cardinality and attribute limits"
+    type: chore
+    priority: 3
+    depends_on: [iep-b-030]
+  - slug: iep-b-040
+    phase: B
+    title: "Layer builder — global tracer provider + tracing_subscriber"
+    type: feature
+    priority: 1
+    depends_on: [iep-b-021]
+  - slug: iep-b-041
+    phase: B
+    title: "run_async / Axum example — init, run, graceful flush"
+    type: task
+    priority: 1
+    depends_on: [iep-b-040]
+  - slug: iep-b-042
+    phase: B
+    title: "run_test guidance — isolate OTEL between tests"
+    type: task
+    priority: 2
+    depends_on: [iep-b-040]
+  - slug: iep-b-050
+    phase: B
+    title: "mdBook chapter — production observability with OTEL"
+    type: task
+    priority: 2
+    depends_on: [iep-b-041]
+  - slug: iep-b-051
+    phase: B
+    title: "CI optional job — all-features subset for OTEL"
+    type: chore
+    priority: 2
+    depends_on: [iep-b-020]
+  - slug: iep-b-052
+    phase: B
+    title: "crates.io publish metadata for id_effect_opentelemetry"
+    type: chore
+    priority: 3
+    depends_on: [iep-b-050]
+  # ─── Phase C ─────────────────────────────────────────────────────────────
+  - slug: iep-c-000
+    phase: C
+    title: "Phase C — SQL platform layer (@effect/sql parity)"
+    type: epic
+    priority: 1
+    depends_on: []
+  - slug: iep-c-010
+    phase: C
+    title: "ADR — sqlx vs tokio-postgres vs deadpool"
+    type: task
+    priority: 1
+    depends_on: []
+  - slug: iep-c-011
+    phase: C
+    title: "RFC — id_effect_sql traits, errors, streaming rows"
+    type: task
+    priority: 1
+    depends_on: [iep-c-010]
+  - slug: iep-c-012
+    phase: C
+    title: "Define transaction nesting / savepoint semantics"
+    type: task
+    priority: 2
+    depends_on: [iep-c-011]
+  - slug: iep-c-020
+    phase: C
+    title: "Add id_effect_sql workspace member (traits + docs)"
+    type: task
+    priority: 1
+    depends_on: [iep-c-011]
+  - slug: iep-c-021
+    phase: C
+    title: "Client trait — query, execute, parameters"
+    type: feature
+    priority: 1
+    depends_on: [iep-c-020]
+  - slug: iep-c-022
+    phase: C
+    title: "Transaction trait — commit/rollback as Effect"
+    type: feature
+    priority: 1
+    depends_on: [iep-c-021]
+  - slug: iep-c-023
+    phase: C
+    title: "Row streaming to Stream (MVP cell types)"
+    type: feature
+    priority: 2
+    depends_on: [iep-c-021]
+  - slug: iep-c-030
+    phase: C
+    title: "id_effect_sql_pg — connect, pool, Layer"
+    type: feature
+    priority: 1
+    depends_on: [iep-c-022]
+  - slug: iep-c-031
+    phase: C
+    title: "Connection string from id_effect_config + Secret redaction"
+    type: task
+    priority: 2
+    depends_on: [iep-c-030]
+  - slug: iep-c-032
+    phase: C
+    title: "Integration tests — docker or testcontainers"
+    type: task
+    priority: 2
+    depends_on: [iep-c-030]
+  - slug: iep-c-033
+    phase: C
+    title: "Pool sizing / acquire timeout observability"
+    type: task
+    priority: 3
+    depends_on: [iep-c-030]
+  - slug: iep-c-040
+    phase: C
+    title: "mdBook chapter — database access with effects"
+    type: task
+    priority: 2
+    depends_on: [iep-c-032]
+  - slug: iep-c-041
+    phase: C
+    title: "Example or integration test as snippet source for book"
+    type: chore
+    priority: 3
+    depends_on: [iep-c-040]
+  # ─── Phase D ─────────────────────────────────────────────────────────────
+  - slug: iep-d-000
+    phase: D
+    title: "Phase D — RPC and service contracts (@effect/rpc parity)"
+    type: epic
+    priority: 2
+    depends_on: []
+  - slug: iep-d-010
+    phase: D
+    title: "Compare tonic vs tarpc vs HTTP+JSON for Effect boundaries"
+    type: task
+    priority: 2
+    depends_on: []
+  - slug: iep-d-011
+    phase: D
+    title: "mdBook chapter — RPC boundaries with id_effect (thin)"
+    type: task
+    priority: 2
+    depends_on: [iep-d-010]
+  - slug: iep-d-012
+    phase: D
+    title: "Example — Axum JSON API + Schema at boundary"
+    type: task
+    priority: 3
+    depends_on: [iep-d-011]
+  - slug: iep-d-020
+    phase: D
+    title: "Add id_effect_rpc skeleton crate"
+    type: task
+    priority: 2
+    depends_on: [iep-d-011]
+  - slug: iep-d-021
+    phase: D
+    title: "RpcError envelope + Axum/IntoResponse bridge"
+    type: feature
+    priority: 2
+    depends_on: [iep-d-020]
+  - slug: iep-d-022
+    phase: D
+    title: "Tracing span helpers for RPC (Phase B integration)"
+    type: task
+    priority: 2
+    depends_on: [iep-d-021]
+  - slug: iep-d-023
+    phase: D
+    title: "Tests — round-trip error mapping"
+    type: task
+    priority: 2
+    depends_on: [iep-d-021]
+  - slug: iep-d-030
+    phase: D
+    title: "Spike — proc-macro or build.rs RPC stub generation"
+    type: task
+    priority: 4
+    depends_on: [iep-d-023]
+  - slug: iep-d-031
+    phase: D
+    title: "Decision — adopt or defer codegen from spike"
+    type: task
+    priority: 4
+    depends_on: [iep-d-030]
+  # ─── Phase E ─────────────────────────────────────────────────────────────
+  - slug: iep-e-000
+    phase: E
+    title: "Phase E — CLI ergonomics (@effect/cli parity)"
+    type: epic
+    priority: 3
+    depends_on: []
+  - slug: iep-e-010
+    phase: E
+    title: "mdBook chapter — CLI entrypoints with clap + Effect"
+    type: task
+    priority: 3
+    depends_on: []
+  - slug: iep-e-011
+    phase: E
+    title: "Document Exit to std::process::ExitCode mapping"
+    type: task
+    priority: 3
+    depends_on: [iep-e-010]
+  - slug: iep-e-012
+    phase: E
+    title: "Snippet — Config + Secret flags via id_effect_config"
+    type: task
+    priority: 3
+    depends_on: [iep-e-010]
+  - slug: iep-e-020
+    phase: E
+    title: "Add id_effect_cli skeleton (clap feature)"
+    type: task
+    priority: 3
+    depends_on: [iep-e-011]
+  - slug: iep-e-021
+    phase: E
+    title: "run_main helper — tracing init, run, error mapping"
+    type: feature
+    priority: 3
+    depends_on: [iep-e-020]
+  - slug: iep-e-022
+    phase: E
+    title: "Integration test — binary exit codes 0/1"
+    type: task
+    priority: 3
+    depends_on: [iep-e-021]
+  - slug: iep-e-030
+    phase: E
+    title: "examples/cli-minimal mirroring book"
+    type: chore
+    priority: 4
+    depends_on: [iep-e-010]
+  - slug: iep-e-031
+    phase: E
+    title: "README link — example + book chapter"
+    type: chore
+    priority: 4
+    depends_on: [iep-e-030]
+  # ─── Phase F ─────────────────────────────────────────────────────────────
+  - slug: iep-f-000
+    phase: F
+    title: "Phase F — Fiber supervision and restart policies"
+    type: epic
+    priority: 2
+    depends_on: []
+  - slug: iep-f-010
+    phase: F
+    title: "Survey Effect.ts supervision vs Exit/Cause"
+    type: task
+    priority: 2
+    depends_on: []
+  - slug: iep-f-011
+    phase: F
+    title: "RFC — Supervisor API + Scope interaction"
+    type: task
+    priority: 2
+    depends_on: [iep-f-010]
+  - slug: iep-f-012
+    phase: F
+    title: "Plan property/law tests for restart counters and backoff"
+    type: task
+    priority: 3
+    depends_on: [iep-f-011]
+  - slug: iep-f-020
+    phase: F
+    title: "Implement SupervisorPolicy enum + docs"
+    type: feature
+    priority: 2
+    depends_on: [iep-f-011]
+  - slug: iep-f-021
+    phase: F
+    title: "Implement Supervisor spawn and child attachment"
+    type: feature
+    priority: 2
+    depends_on: [iep-f-020]
+  - slug: iep-f-022
+    phase: F
+    title: "Restart loop with Schedule backoff between restarts"
+    type: feature
+    priority: 2
+    depends_on: [iep-f-021]
+  - slug: iep-f-023
+    phase: F
+    title: "Escalation — supervisor fails with aggregated Cause"
+    type: feature
+    priority: 2
+    depends_on: [iep-f-021]
+  - slug: iep-f-024
+    phase: F
+    title: "Stress tests — bounded tight restart loops"
+    type: task
+    priority: 2
+    depends_on: [iep-f-022]
+  - slug: iep-f-030
+    phase: F
+    title: "mdBook chapter — supervision vs raw fork"
+    type: task
+    priority: 3
+    depends_on: [iep-f-023]
+  - slug: iep-f-031
+    phase: F
+    title: "Optional lint — warn fork without scope in servers"
+    type: chore
+    priority: 4
+    depends_on: [iep-f-030]
+  # ─── Phase G ─────────────────────────────────────────────────────────────
+  - slug: iep-g-000
+    phase: G
+    title: "Phase G — Cluster / durable workflow (research)"
+    type: epic
+    priority: 4
+    depends_on: []
+  - slug: iep-g-010
+    phase: G
+    title: "Charter — success criteria for workflow in repo"
+    type: task
+    priority: 4
+    depends_on: []
+  - slug: iep-g-011
+    phase: G
+    title: "ADR — Temporal vs saga table vs out of scope"
+    type: task
+    priority: 4
+    depends_on: [iep-g-010]
+  - slug: iep-g-012
+    phase: G
+    title: "Security review — idempotency keys, PII, replay safety"
+    type: task
+    priority: 4
+    depends_on: [iep-g-011]
+  - slug: iep-g-020
+    phase: G
+    title: "Spike crate — append-only step log + resume"
+    type: feature
+    priority: 4
+    depends_on: [iep-g-011, iep-f-021]
+  - slug: iep-g-021
+    phase: G
+    title: "Demo — single-process restart resumes workflow"
+    type: task
+    priority: 4
+    depends_on: [iep-g-020]
+  - slug: iep-g-022
+    phase: G
+    title: "Spike retrospective — keep, delete, or externalize"
+    type: task
+    priority: 4
+    depends_on: [iep-g-021]
+  - slug: iep-g-030
+    phase: G
+    title: "Harden — stable API from spike + semver policy"
+    type: feature
+    priority: 3
+    depends_on: [iep-g-022]
+  - slug: iep-g-031
+    phase: G
+    title: "Load tests + crash mid-workflow injection"
+    type: task
+    priority: 3
+    depends_on: [iep-g-030]
+  - slug: iep-g-032
+    phase: G
+    title: "mdBook — when to use this vs external orchestrator"
+    type: task
+    priority: 3
+    depends_on: [iep-g-030]
+  # ─── Phase H ─────────────────────────────────────────────────────────────
+  - slug: iep-h-000
+    phase: H
+    title: "Phase H — AI client abstractions (@effect/ai parity)"
+    type: epic
+    priority: 4
+    depends_on: []
+  - slug: iep-h-010
+    phase: H
+    title: "RFC — id_effect_ai naming, features, MSRV, dependency budget"
+    type: task
+    priority: 4
+    depends_on: []
+  - slug: iep-h-011
+    phase: H
+    title: "Threat model — secrets, prompt injection, log redaction"
+    type: task
+    priority: 4
+    depends_on: [iep-h-010]
+  - slug: iep-h-020
+    phase: H
+    title: "Add id_effect_ai skeleton + core traits"
+    type: task
+    priority: 4
+    depends_on: [iep-h-010]
+  - slug: iep-h-021
+    phase: H
+    title: "Streaming completions as Stream/Chunk"
+    type: feature
+    priority: 4
+    depends_on: [iep-h-020]
+  - slug: iep-h-022
+    phase: H
+    title: "Retries via Schedule for transient HTTP failures"
+    type: task
+    priority: 4
+    depends_on: [iep-h-021]
+  - slug: iep-h-030
+    phase: H
+    title: "OpenAI-compatible chat completion (feature-gated)"
+    type: feature
+    priority: 4
+    depends_on: [iep-h-022, iep-a-021]
+  - slug: iep-h-031
+    phase: H
+    title: "Mock server tests — no live API keys in CI"
+    type: task
+    priority: 4
+    depends_on: [iep-h-030]
+  - slug: iep-h-032
+    phase: H
+    title: "Example + book appendix for AI chapter"
+    type: chore
+    priority: 4
+    depends_on: [iep-h-031]
+  # ─── Phase I ─────────────────────────────────────────────────────────────
+  - slug: iep-i-000
+    phase: I
+    title: "Phase I — Ongoing Effect.ts parity maintenance"
+    type: epic
+    priority: 2
+    depends_on: []
+  - slug: iep-i-010
+    phase: I
+    title: "Add CHECKLIST-upstream-effect.md module parity rows"
+    type: task
+    priority: 2
+    depends_on: []
+  - slug: iep-i-011
+    phase: I
+    title: "Define release ritual — owner, timebox, upstream changelog links"
+    type: task
+    priority: 2
+    depends_on: [iep-i-010]
+  - slug: iep-i-012
+    phase: I
+    title: "Script or justfile recipe to print checklist + upstream URLs"
+    type: chore
+    priority: 3
+    depends_on: [iep-i-011]
+  - slug: iep-i-020
+    phase: I
+    title: "Audit id_effect_lint vs Effect.ts anti-patterns"
+    type: task
+    priority: 3
+    depends_on: []
+  - slug: iep-i-021
+    phase: I
+    title: "Extend lints for new platform/OTEL crates"
+    type: task
+    priority: 3
+    depends_on: [iep-i-020]
+  - slug: iep-i-022
+    phase: I
+    title: "Document lint false positives + allow patterns in book"
+    type: chore
+    priority: 3
+    depends_on: [iep-i-021]
+  - slug: iep-i-030
+    phase: I
+    title: "Glossary updates for phases A–H terms"
+    type: chore
+    priority: 3
+    depends_on: []
+  - slug: iep-i-031
+    phase: I
+    title: "Cross-links from mdBook to docs/effect-ts-parity"
+    type: chore
+    priority: 3
+    depends_on: [iep-i-010]
+  - slug: iep-i-040
+    phase: I
+    title: "CI — periodic link check for external Effect docs"
+    type: chore
+    priority: 4
+    depends_on: [iep-i-010]
+  - slug: iep-i-041
+    phase: I
+    title: "Track upstream Effect version in UPSTREAM-VERSION file"
+    type: chore
+    priority: 4
+    depends_on: [iep-i-011]
+# Optional cross-phase epic edges (apply only if you want strict epic gates):
+# bd dep add <downstream_epic_bd_id> <upstream_epic_bd_id>
+cross_phase_suggested_edges:
+  - blocked_phase: B
+    blocker_phase: A
+    note: "Strict epic gate usually too coarse; prefer task-level deps."
+  - blocked_phase: H
+    blocker_phase: A
+    note: "HTTP client traits before vendor AI implementations."
+  - blocked_phase: G
+    blocker_phase: F
+    note: "Supervision before durable workflow product track."
+  - blocked_phase: D
+    blocker_phase: B
+    note: "Tracing for RPC examples."
+  - blocked_phase: D
+    blocker_phase: C
+    note: "SQL-backed RPC examples."

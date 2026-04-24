@@ -203,7 +203,7 @@ pub fn check_no_effect_suffix<'tcx>(
   cx: &LateContext<'tcx>,
   kind: FnKind<'tcx>,
   decl: &'tcx rustc_hir::FnDecl<'tcx>,
-  span: Span,
+  _span: Span,
 ) {
   if !returns_effect(decl) {
     return;
@@ -229,7 +229,7 @@ pub fn check_blocking_suffix_misuse<'tcx>(
   cx: &LateContext<'tcx>,
   kind: FnKind<'tcx>,
   decl: &'tcx rustc_hir::FnDecl<'tcx>,
-  span: Span,
+  _span: Span,
 ) {
   if !returns_effect(decl) {
     return;

@@ -56,6 +56,7 @@ For depth beyond this README, use the mdBook [**Typed Effects in Rust**](https:/
 | [`id_effect_axum`](crates/id_effect_axum) | [![crates.io](https://img.shields.io/crates/v/id_effect_axum.svg)](https://crates.io/crates/id_effect_axum) | Axum integration |
 | [`id_effect_logger`](crates/id_effect_logger) | [![crates.io](https://img.shields.io/crates/v/id_effect_logger.svg)](https://crates.io/crates/id_effect_logger) | Logging service (tracing backend) |
 | [`id_effect_config`](crates/id_effect_config) | [![crates.io](https://img.shields.io/crates/v/id_effect_config.svg)](https://crates.io/crates/id_effect_config) | `ConfigProvider` + Figment/serde layers |
+| [`id_effect_platform`](crates/id_effect_platform) | (publish with core) | Platform traits: HTTP, FS, process (`@effect/platform` parity) |
 | [`id_effect_reqwest`](crates/id_effect_reqwest) | [![crates.io](https://img.shields.io/crates/v/id_effect_reqwest.svg)](https://crates.io/crates/id_effect_reqwest) | HTTP via reqwest |
 | [`id_effect_tower`](crates/id_effect_tower) | [![crates.io](https://img.shields.io/crates/v/id_effect_tower.svg)](https://crates.io/crates/id_effect_tower) | Tower `Service` bridge |
 

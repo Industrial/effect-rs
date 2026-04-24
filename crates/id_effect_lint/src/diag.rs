@@ -25,7 +25,8 @@ pub fn span_lint_and_help(
   );
 }
 
-/// Emit a plain lint at `span`.
+/// Emit a plain lint at `span` (available for lints that do not need a help line).
+#[allow(dead_code)]
 pub fn span_lint(
   cx: &LateContext<'_>,
   lint: &'static Lint,

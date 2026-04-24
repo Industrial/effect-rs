@@ -42,6 +42,7 @@
   - [ServiceEnv and service_env](./part2/ch07-02-service-env.md)
   - [Providing Services via Layers](./part2/ch07-03-providing-services.md)
   - [A Complete DI Example](./part2/ch07-04-complete-example.md)
+  - [Platform services (stub)](./part2/ch07-05-platform-services.md)
 
 # Part III: Real Programs
 

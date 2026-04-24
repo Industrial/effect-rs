@@ -28,6 +28,7 @@ pub fn check_no_static_service_globals(cx: &LateContext<'_>, item: &rustc_hir::I
 
 // ─── E-03: No thread_local! for request context ───────────────────────────────
 
+#[allow(deprecated)] // TyCtxt::get_attrs: replace with find_attr! / hir attrs when MSRV allows
 pub fn check_no_thread_local(cx: &LateContext<'_>, item: &rustc_hir::Item<'_>) {
   if matches!(item.kind, ItemKind::Static(..)) {
     let has_thread_local_attr = cx

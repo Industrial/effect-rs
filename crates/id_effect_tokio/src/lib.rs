@@ -10,6 +10,16 @@
 //! See `examples/` (e.g. `109_tokio_end_to_end`). Re-exports
 //! [`run_async`], [`run_blocking`], [`run_fork`], and [`yield_now`] from `id_effect` for use at the
 //! async boundary alongside [`TokioRuntime`].
+//!
+//! ## Async effects that are not [`Send`] ([`spawn_blocking_run_async`])
+//!
+//! [`tokio::spawn`] requires a [`Send`] future; the future produced by [`run_async`] often is **not**
+//! [`Send`] (e.g. when the graph holds [`id_effect::Scope`] or [`id_effect::Pool::get`] checkout).
+//! [`Runtime::spawn_with`] on [`TokioRuntime`] therefore drives the interpreter with [`run_blocking`],
+//! which is wrong for effects that need a real async driver (I/O, timers). For those, use
+//! [`spawn_blocking_run_async`] (or [`TokioRuntime::spawn_blocking_run_async`]): run the effect on
+//! Tokio’s **blocking pool** and drive it with [`run_async`] inside [`Handle::block_on`] — the same
+//! pattern as manually pairing [`Handle::spawn_blocking`] with `block_on(run_async(..))`.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -21,6 +31,40 @@ use id_effect::{Effect, FiberHandle, FiberId, Never, Runtime, from_async};
 
 /// Commonly used at the async boundary together with [`TokioRuntime`].
 pub use id_effect::{run_async, run_blocking, run_fork, yield_now};
+
+/// Run an [`Effect`] on Tokio’s **blocking thread pool**, driving it with [`run_async`] via
+/// [`Handle::block_on`] on the same runtime.
+///
+/// Use this when the async effect graph is **not** [`Send`] and therefore cannot be scheduled with
+/// [`tokio::spawn`], but still needs the real async interpreter (unlike [`run_fork`], which uses
+/// [`run_blocking`] and only cooperates correctly for sync / spin‑pollable graphs).
+///
+/// `f` is [`Send`] and runs **on the blocking worker**; it constructs `(Effect, env)` there, matching
+/// [`Runtime::spawn_with`].
+///
+/// `A` and `E` must be [`Send`] so the [`Result`] can be returned through Tokio’s
+/// [`JoinHandle`](tokio::task::JoinHandle) (the `Effect` value itself may still be non-[`Send`], as
+/// usual).
+///
+/// The returned [`tokio::task::JoinHandle`] resolves to [`Result`] from [`run_async`] when the
+/// blocking task finishes (including if the effect fails or panics per Tokio rules).
+pub fn spawn_blocking_run_async<A, E, R, F>(
+  handle: &tokio::runtime::Handle,
+  f: F,
+) -> tokio::task::JoinHandle<Result<A, E>>
+where
+  A: Send + 'static,
+  E: Send + 'static,
+  R: 'static,
+  F: FnOnce() -> (Effect<A, E, R>, R) + Send + 'static,
+{
+  let h_spawn = handle.clone();
+  let h_block = handle.clone();
+  h_spawn.spawn_blocking(move || {
+    let (effect, env) = f();
+    h_block.block_on(run_async(effect, env))
+  })
+}
 
 /// Tokio-backed [`Runtime`] adapter (async `sleep` / `yield_now`).
 pub struct TokioRuntime {
@@ -94,6 +138,18 @@ impl TokioRuntime {
       ),
     }
   }
+
+  /// Same as [`spawn_blocking_run_async`], using this adapter’s [`Self::handle`].
+  #[inline]
+  pub fn spawn_blocking_run_async<A, E, R, F>(&self, f: F) -> tokio::task::JoinHandle<Result<A, E>>
+  where
+    A: Send + 'static,
+    E: Send + 'static,
+    R: 'static,
+    F: FnOnce() -> (Effect<A, E, R>, R) + Send + 'static,
+  {
+    spawn_blocking_run_async(&self._handle, f)
+  }
 }
 
 impl Runtime for TokioRuntime {
@@ -145,8 +201,34 @@ fn instant_now_blocking() -> Instant {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use id_effect::Effect;
   use id_effect::kernel::succeed;
   use std::time::Duration;
+
+  #[test]
+  fn spawn_blocking_run_async_runs_async_effect_to_completion() {
+    let rt = TokioRuntime::new_current_thread().expect("tokio runtime should build");
+    rt.block_on(async {
+      let j = spawn_blocking_run_async(&rt.handle(), || {
+        let eff: Effect<u32, (), ()> = from_async(move |_env| async move { Ok::<u32, ()>(41) });
+        (eff, ())
+      });
+      assert_eq!(j.await.expect("join"), Ok(41));
+    });
+  }
+
+  #[test]
+  fn tokio_runtime_spawn_blocking_run_async_delegates() {
+    let rt = TokioRuntime::new_current_thread().expect("tokio runtime should build");
+    rt.block_on(async {
+      let j = rt.spawn_blocking_run_async(|| {
+        let eff: Effect<u8, &'static str, ()> =
+          from_async(move |_env| async move { Ok::<u8, &'static str>(9) });
+        (eff, ())
+      });
+      assert_eq!(j.await.expect("join"), Ok(9));
+    });
+  }
 
   #[test]
   fn new_current_thread_runs_sleep_and_yield_under_block_on() {

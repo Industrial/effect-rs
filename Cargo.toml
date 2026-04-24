@@ -3,6 +3,7 @@ resolver = "2"
 exclude = [".tmp", "tmp", "crates/id_effect_lint"]
 members = [
   "crates/id_effect",
+  "crates/id_effect_platform",
   "crates/id_effect_axum",
   "crates/id_effect_config",
   "crates/id_effect_logger",

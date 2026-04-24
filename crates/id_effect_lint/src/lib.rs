@@ -300,6 +300,9 @@ impl<'tcx> LateLintPass<'tcx> for EffectRsPass {
     // A-02: no Result return in pub fn
     fn_sigs::check_no_result_return_pub(cx, kind, decl, is_pub, span, def_id);
 
+    // F-01 (fn bodies): no nested Result in public fn return type
+    items::check_no_nested_result_fn(cx, decl, is_pub, span);
+
     // A-03, A-04, A-05, A-06: where clause and bound rules (skip for tests)
     if !in_test {
       let generics = extract_generics(kind);

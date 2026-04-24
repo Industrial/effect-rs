@@ -129,6 +129,11 @@ A value of type `Schema<T>` that describes how to parse an `Unknown` into a `T`.
 
 ---
 
+**`id_effect_platform`**
+Workspace crate providing `@effect/platform`-style **HTTP**, **filesystem**, and **process** traits plus Tokio-backed implementations (`HttpClient`, `FileSystem`, `ProcessRuntime`, …). See [Platform services (stub)](./part2/ch07-05-platform-services.md).
+
+---
+
 **Scope**
 A resource lifetime boundary. Finalizers registered with a `Scope` run when the scope exits, whether by success, failure, or cancellation. Use `acquire_release` for the common bracket pattern. See [Scopes and Finalizers](./part3/ch10-02-scopes-finalizers.md).
 

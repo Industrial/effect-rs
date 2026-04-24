@@ -60,6 +60,11 @@ where
     shared_fail: Arc<Mutex<Option<E>>>,
   },
   Buffered(VecDeque<A>),
+  /// [`Stream::chain`]: drain `first` to completion, then drain `second` incrementally.
+  Chaining {
+    first: Option<Stream<A, E, R>>,
+    second: Stream<A, E, R>,
+  },
   Exhausted,
 }
 
@@ -330,6 +335,55 @@ where
             }
             return Ok(Some(Chunk::from_vec(out)));
           }
+          StreamState::Chaining { first, second } => {
+            if let Some(mut fs) = first.take() {
+              drop(guard);
+              match fs.poll_next_chunk_with_size(env, chunk_size).await {
+                Ok(Some(chunk)) => {
+                  let mut g = state.lock().expect("stream state mutex poisoned");
+                  if let StreamState::Chaining { first, .. } = &mut *g {
+                    *first = Some(fs);
+                  }
+                  drop(g);
+                  let n = chunk.len() as u64;
+                  if let Some(m) = &throughput {
+                    match m.apply(n).run(&mut ()).await {
+                      Ok(()) => {}
+                      Err(never) => match never {},
+                    }
+                  }
+                  return Ok(Some(chunk));
+                }
+                Err(e) => {
+                  let mut g = state.lock().expect("stream state mutex poisoned");
+                  if let StreamState::Chaining { first, .. } = &mut *g {
+                    *first = Some(fs);
+                  }
+                  return Err(e);
+                }
+                Ok(None) => {
+                  continue;
+                }
+              }
+            }
+            let out = second.poll_next_chunk_with_size(env, chunk_size).await;
+            match &out {
+              Ok(Some(chunk)) => {
+                let n = chunk.len() as u64;
+                if let Some(m) = &throughput {
+                  match m.apply(n).run(&mut ()).await {
+                    Ok(()) => {}
+                    Err(never) => match never {},
+                  }
+                }
+              }
+              Ok(None) => {
+                *guard = StreamState::Exhausted;
+              }
+              Err(_) => {}
+            }
+            return out;
+          }
           StreamState::Buffered(items) => {
             if items.is_empty() {
               *guard = StreamState::Exhausted;
@@ -400,6 +454,19 @@ where
   #[inline]
   pub fn from_effect(effect: Effect<Vec<A>, E, R>) -> Self {
     Self::new(move |r| effect.run(r))
+  }
+
+  /// Concatenate: yields all chunks from `self`, then all chunks from `second` (incremental; supports
+  /// a long or unbounded second stream).
+  #[must_use]
+  pub fn chain(self, second: Self) -> Self {
+    Self {
+      state: Arc::new(Mutex::new(StreamState::Chaining {
+        first: Some(self),
+        second,
+      })),
+      throughput: None,
+    }
   }
 
   /// Any [`Channel`](crate::coordination::channel::Channel) as an output [`Stream`] (Wave 7).
