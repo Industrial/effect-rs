@@ -96,7 +96,7 @@ impl RpcError {
     }
   }
 
-  /// Attach correlation id to the envelope (typically from [`crate::correlation`](crate::correlation)).
+  /// Attach correlation id to the envelope (typically from [`crate::correlation`]).
   #[must_use]
   #[inline]
   pub fn with_correlation_id(mut self, id: impl Into<String>) -> Self {
