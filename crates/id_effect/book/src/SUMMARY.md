@@ -49,6 +49,7 @@
   - [Tower service (`id_effect_tower`)](./part2/ch07-09-tower-service.md)
   - [Configuration (`id_effect_config`)](./part2/ch07-10-config.md)
   - [Logging (`id_effect_logger`)](./part2/ch07-11-logger.md)
+  - [OpenTelemetry (`id_effect_opentelemetry`)](./part2/ch07-12-opentelemetry.md)
 
 # Part III: Real Programs
 

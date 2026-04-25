@@ -1,0 +1,42 @@
+[package]
+name = "id_effect_opentelemetry"
+version = "0.2.0"
+edition = "2024"
+license = "CC-BY-SA-4.0"
+description = "OpenTelemetry tracing and metrics integration for id_effect (Phase B / @effect/opentelemetry parity)"
+repository = "https://github.com/Industrial/id_effect"
+readme = "README.md"
+keywords = ["effect", "opentelemetry", "tracing", "observability"]
+categories = ["development-tools"]
+
+[lints.rust]
+unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+
+[dependencies]
+id_effect = { path = "../id_effect", version = "0.2.0" }
+opentelemetry = { version = "0.31", default-features = false, features = [
+  "trace",
+  "metrics",
+] }
+opentelemetry_sdk = { version = "0.31", default-features = false, features = [
+  "trace",
+  "metrics",
+  "rt-tokio",
+  "testing",
+] }
+# Minimum version that introduced the `wrappers` module required by opentelemetry_sdk's rt-tokio feature.
+# This fixes `cargo -Z minimal-versions` which otherwise resolves tokio-stream to 0.1.0 (no wrappers).
+tokio-stream = { version = "0.1.3", default-features = false, features = [
+  "time",
+] }
+tracing = "0.1"
+tracing-opentelemetry = "0.32"
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+  "registry",
+  "fmt",
+  "std",
+] }
+
+[dev-dependencies]
+tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
