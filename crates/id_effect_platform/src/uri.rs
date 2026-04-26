@@ -1,6 +1,7 @@
 //! HTTP URI helpers (`http::Uri` parse / build).
 
 use http::Uri;
+use rayon::prelude::*;
 
 /// Parse a string into [`http::Uri`].
 #[inline]
@@ -17,6 +18,12 @@ pub fn from_parts(
 ) -> Result<Uri, http::uri::InvalidUri> {
   let s = format!("{scheme}://{authority}{path_and_query}");
   s.parse()
+}
+
+/// Parse many URI strings in parallel; results are in the same order as `urls`.
+#[inline]
+pub fn parse_uris_par(urls: &[&str]) -> Vec<Result<Uri, http::uri::InvalidUri>> {
+  urls.par_iter().map(|s| s.parse()).collect()
 }
 
 #[cfg(test)]
@@ -54,6 +61,24 @@ mod tests {
     #[test]
     fn rejects_when_scheme_has_invalid_chars() {
       assert!(from_parts("ht\tp", "example.com", "/").is_err());
+    }
+  }
+
+  mod parse_uris_par {
+    use super::*;
+
+    #[test]
+    fn preserves_order_and_mixed_ok_err() {
+      let urls: &[&str] = &[
+        "https://a.example/",
+        "not a uri at all",
+        "https://b.example/",
+      ];
+      let out = parse_uris_par(urls);
+      assert_eq!(out.len(), 3);
+      assert!(out[0].as_ref().unwrap().host() == Some("a.example"));
+      assert!(out[1].is_err());
+      assert!(out[2].as_ref().unwrap().host() == Some("b.example"));
     }
   }
 }

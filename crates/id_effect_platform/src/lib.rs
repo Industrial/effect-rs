@@ -2,6 +2,8 @@
 //! inspired by Effect.ts [`@effect/platform`](https://effect.website/docs/platform/introduction).
 //!
 //! The crate ships **one** build: [`http`], [`fs`], [`process`], and [`uri`] are always available.
+//! For many independent URI strings, [`uri::parse_uris_par`](crate::uri::parse_uris_par) parses in
+//! parallel with rayon.
 //!
 //! ## Example (HTTP, with Tokio)
 //!

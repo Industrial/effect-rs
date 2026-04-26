@@ -16,6 +16,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 [dependencies]
 id_effect = { path = "../id_effect", version = "0.2.0" }
 bytes = { version = "1" }
+rayon = "1.12"
 http = { version = "1" }
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 tokio = { version = "1.50.0", features = [
