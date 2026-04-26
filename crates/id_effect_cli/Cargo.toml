@@ -20,6 +20,7 @@ clap = ["dep:clap"]
 
 [dependencies]
 id_effect = { path = "../id_effect", version = "0.2.0" }
+rayon = "1.12"
 clap = { version = "4.5", optional = true, default-features = false, features = [
   "std",
   "derive",

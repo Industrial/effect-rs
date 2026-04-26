@@ -1,6 +1,7 @@
 //! Map [`id_effect::Exit`], [`id_effect::Cause`], and [`Result`] to [`std::process::ExitCode`].
 
 use id_effect::{Cause, Exit};
+use rayon::prelude::*;
 use std::process::ExitCode;
 
 /// Numeric byte used inside [`ExitCode`] for a [`Cause`] tree (deepest / worst wins for composites).
@@ -48,6 +49,29 @@ pub fn exit_code_for_result<A, E>(result: Result<A, E>) -> ExitCode {
     Ok(_) => ExitCode::SUCCESS,
     Err(_) => ExitCode::from(1u8),
   }
+}
+
+/// [`cause_max_exit_byte`] for each entry in parallel; output order matches `causes`.
+///
+/// Use for batch tooling (many finished fibers, test shards, etc.) where each [`Cause`] is
+/// independent.
+pub fn cause_max_exit_bytes_par<E>(causes: &[Cause<E>]) -> Vec<u8>
+where
+  E: Sync,
+{
+  causes.par_iter().map(cause_max_exit_byte).collect()
+}
+
+/// [`ExitCode`] for each [`Cause`] in parallel; same exit byte as [`exit_code_for_cause`] for the
+/// same tree, with output order matching `causes`.
+pub fn exit_codes_for_causes_par<E>(causes: &[Cause<E>]) -> Vec<ExitCode>
+where
+  E: Sync,
+{
+  causes
+    .par_iter()
+    .map(|c| ExitCode::from(cause_max_exit_byte(c)))
+    .collect()
 }
 
 #[cfg(test)]
@@ -116,6 +140,36 @@ mod tests {
     fn failure_fail_yields_exit_code_one() {
       let code = exit_code_for_exit(Exit::<(), &str>::fail("oops"));
       assert_eq!(code, ExitCode::from(1u8));
+    }
+  }
+
+  mod parallel_cause_maps {
+    use super::*;
+    use id_effect::FiberId;
+
+    #[test]
+    fn cause_max_exit_bytes_par_preserves_order() {
+      let causes = [
+        Cause::<&str>::fail("x"),
+        Cause::die("d"),
+        Cause::interrupt(FiberId::new(1)),
+      ];
+      let bytes = cause_max_exit_bytes_par(&causes);
+      assert_eq!(bytes, vec![1, 101, 130]);
+    }
+
+    #[test]
+    fn exit_codes_for_causes_par_matches_sequential_exit_code_for_cause() {
+      let causes = [
+        Cause::<()>::fail(()),
+        Cause::both(Cause::fail(()), Cause::die("z")),
+      ];
+      let par = exit_codes_for_causes_par(&causes);
+      let seq: Vec<_> = causes.iter().cloned().map(exit_code_for_cause).collect();
+      assert_eq!(par.len(), seq.len());
+      for (a, b) in par.iter().zip(seq.iter()) {
+        assert_eq!(*a, *b);
+      }
     }
   }
 
