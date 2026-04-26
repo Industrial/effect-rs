@@ -45,6 +45,7 @@ use std::time::Duration;
 use ::id_effect::{Effect, Get, Here, effect};
 use id_effect::duration::duration;
 use id_effect_logger::LogLevel;
+use rayon::prelude::*;
 use url::Url;
 
 use crate::ambient::current_config_provider;
@@ -627,6 +628,24 @@ pub fn all_vec<T: Send + Sync + 'static>(configs: Vec<Config<T>>) -> Config<Vec<
   }
 }
 
+/// Like [`all_vec`], but evaluates each descriptor in parallel with rayon.
+///
+/// Order and error semantics match [`all_vec`]: results align with `configs`; the first load error
+/// is returned (after parallel evaluation, errors are folded in slice order).
+pub fn all_vec_par<T: Send + Sync + 'static>(configs: Vec<Config<T>>) -> Config<Vec<T>> {
+  let configs = Arc::new(configs);
+  Config {
+    loader: Arc::new(move |p| {
+      configs
+        .par_iter()
+        .map(|c| (c.loader)(p))
+        .collect::<Vec<Result<T, ConfigError>>>()
+        .into_iter()
+        .collect()
+    }),
+  }
+}
+
 /// Namespace `inner` under `prefix` (same as [`Config::nested`]).
 #[inline]
 pub fn nest<T: Send + Sync + 'static>(prefix: impl Into<String>, inner: Config<T>) -> Config<T> {
@@ -810,6 +829,46 @@ mod tests {
     )
     .unwrap();
     assert_eq!(vals, vec![10, 20, 30]);
+  }
+
+  #[test]
+  fn all_vec_par_matches_all_vec_success() {
+    let p = map_provider(&[("K0", "10"), ("K1", "20"), ("K2", "30")]);
+    let seq = go(
+      all_vec(vec![
+        Config::integer("K0"),
+        Config::integer("K1"),
+        Config::integer("K2"),
+      ]),
+      &p,
+    )
+    .unwrap();
+    let par = go(
+      all_vec_par(vec![
+        Config::integer("K0"),
+        Config::integer("K1"),
+        Config::integer("K2"),
+      ]),
+      &p,
+    )
+    .unwrap();
+    assert_eq!(seq, par);
+  }
+
+  #[test]
+  fn all_vec_par_matches_all_vec_invalid_first_key() {
+    let p = map_provider(&[("K0", "not-int"), ("K1", "20")]);
+    let seq = go(
+      all_vec(vec![Config::integer("K0"), Config::integer("K1")]),
+      &p,
+    );
+    let par = go(
+      all_vec_par(vec![Config::integer("K0"), Config::integer("K1")]),
+      &p,
+    );
+    assert!(matches!(seq, Err(ConfigError::Invalid { .. })));
+    assert!(matches!(par, Err(ConfigError::Invalid { .. })));
+    assert_eq!(format!("{seq:?}"), format!("{par:?}"));
   }
 
   #[test]

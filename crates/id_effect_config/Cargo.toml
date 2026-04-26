@@ -34,6 +34,7 @@ id_effect = { path = "../id_effect", version = "0.2.0" }
 id_effect_logger = { path = "../id_effect_logger", version = "0.2.0" }
 # Floor for figment's pear dep: 0.2.0 does not build on current Rust (fmt::Write on InlinableString).
 pear = "0.2.9"
+rayon = "1.12"
 figment = { version = "0.10.19", default-features = false }
 serde = { version = "1", default-features = false }
 url = { version = "2", default-features = false }

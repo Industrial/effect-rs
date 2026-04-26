@@ -4,7 +4,9 @@
 //! ## 1. `Config<T>` descriptor (Effect `Config.string` / `Config.withDefault` / `Config.all`)
 //!
 //! The recommended approach.  Compose lazy descriptors, then evaluate with [`Config::run`]
-//! (service-injected) or [`Config::load`] (direct provider reference):
+//! (service-injected) or [`Config::load`] (direct provider reference). For many independent scalar
+//! loads, [`all_vec_par`](config_desc::all_vec_par) is like [`all_vec`](config_desc::all_vec) but
+//! uses rayon.
 //!
 //! ```rust
 //! use std::sync::Arc;
@@ -63,7 +65,9 @@ mod provider;
 mod secret;
 
 pub use ambient::{current_config_provider, with_config_provider};
-pub use config_desc::{Config, all, all_vec, all3, nest, or_else as or_else_config, zip_with};
+pub use config_desc::{
+  Config, all, all_vec, all_vec_par, all3, nest, or_else as or_else_config, zip_with,
+};
 pub use error::ConfigError;
 pub use load::{
   WithConfigDefault, nested_path, read_bool, read_i64, read_nested_string, read_nested_string_list,
@@ -119,7 +123,7 @@ pub fn config_env<P: ConfigProvider + 'static>(provider: P) -> ConfigEnv {
 /// The *descriptor* ([`Config`]) and *free functions* ([`all`], [`zip_with`], …) are
 /// re-exported here so call sites can write `config::all(…)` and `config::Config::string(…)`.
 pub mod config {
-  pub use crate::config_desc::{Config, all, all_vec, all3, nest, or_else, zip_with};
+  pub use crate::config_desc::{Config, all, all_vec, all_vec_par, all3, nest, or_else, zip_with};
   pub use crate::secret::Secret;
   pub use crate::{current_config_provider, with_config_provider};
 
