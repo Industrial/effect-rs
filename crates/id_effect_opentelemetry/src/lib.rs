@@ -8,7 +8,8 @@
 //! - **Span bridge** — compose [`id_effect::with_span`] with `tracing` spans exported to OTEL.
 //! - **Propagation** — W3C Trace Context (`traceparent` / `tracestate`) on header maps.
 //! - **Subscriber helpers** — build [`opentelemetry_sdk::trace::SdkTracerProvider`] for tests and apps.
-//! - **Metric bridges** — dual-write [`id_effect::Metric`] instruments to OTEL.
+//! - **Metric bridges** — dual-write [`id_effect::Metric`] instruments to OTEL, with optional
+//!   parallel batch helpers (`apply_many_par`) for independent samples.
 //!
 //! ## Testing
 //!
