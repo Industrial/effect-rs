@@ -7,6 +7,7 @@ use axum::response::{IntoResponse, Response};
 use id_effect::data::EffectData;
 use id_effect::schema::serde_bridge::unknown_from_serde_json;
 use id_effect::schema::{ParseError, Schema, Unknown};
+use rayon::prelude::*;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -86,6 +87,25 @@ where
     .map_err(JsonSchemaError::Schema)
 }
 
+/// Parse and validate many JSON payloads with the same [`Schema`] in parallel.
+///
+/// Results are in the same order as `bodies`. Use this for batch import or bulk validation where
+/// each body is independent; for a single request body, use [`decode_json_schema`] instead.
+pub fn decode_json_schema_batch_par<A, I, E>(
+  schema: &Schema<A, I, E>,
+  bodies: &[&[u8]],
+) -> Vec<Result<A, JsonSchemaError>>
+where
+  E: EffectData + Send + Sync + 'static,
+  A: Send + 'static,
+  I: Send + Sync + 'static,
+{
+  bodies
+    .par_iter()
+    .map(|bytes| decode_json_schema(schema, bytes))
+    .collect()
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -142,5 +162,28 @@ mod tests {
     assert!(matches!(err, JsonSchemaError::Syntax(_)));
     let resp = err.into_response();
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+  }
+
+  #[test]
+  fn decode_json_schema_batch_par_preserves_order_and_mixed_results() {
+    let schema = Arc::new(schema::struct_(
+      "name",
+      schema::string::<()>(),
+      "age",
+      schema::i64::<()>(),
+    ));
+    let b0 = br#"{"name":"ada","age":10}"#.as_slice();
+    let b1 = br#"{"name":"bob","age":"x"}"#.as_slice();
+    let b2 = br#"{"name":"carl","age":20}"#.as_slice();
+    let bodies: &[&[u8]] = &[b0, b1, b2];
+    let out = decode_json_schema_batch_par(schema.as_ref(), bodies);
+    assert_eq!(out.len(), 3);
+    let (n0, a0) = out[0].as_ref().expect("ok");
+    assert_eq!(n0.as_str(), "ada");
+    assert_eq!(*a0, 10);
+    assert!(matches!(&out[1], Err(JsonSchemaError::Schema(_))));
+    let (n2, a2) = out[2].as_ref().expect("ok");
+    assert_eq!(n2.as_str(), "carl");
+    assert_eq!(*a2, 20);
   }
 }

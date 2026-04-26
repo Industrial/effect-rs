@@ -53,7 +53,8 @@
 //! Use [`json::decode_json_schema`] with [`Bytes`](axum::body::Bytes) (or any raw body) to validate
 //! JSON via [`Schema::decode_unknown`](id_effect::schema::Schema::decode_unknown) (any wire type `I`).
 //! Map failures with [`json::JsonSchemaError`] ([`IntoResponse`]) — schema errors become **422** with
-//! `path` + `message`.
+//! `path` + `message`. For many independent bodies, [`json::decode_json_schema_batch_par`] runs
+//! [`decode_json_schema`](json::decode_json_schema) in parallel with the same schema.
 //!
 //! ## Examples
 //!
