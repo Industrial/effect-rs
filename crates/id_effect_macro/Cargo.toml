@@ -16,3 +16,6 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 [lib]
 name = "id_effect_macro"
 # Normal library: `macro_rules!` only. Expansions use `::id_effect::…` paths (no dependency on `effect`).
+
+[dependencies]
+rayon = "1.12"
