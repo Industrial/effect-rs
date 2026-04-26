@@ -6,8 +6,8 @@
 //! Run: `cargo run -p id_effect_workflow --example 001_restart_resume`
 
 use id_effect_workflow::{DurableWorkflowLog, WorkflowError};
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 fn main() -> Result<(), WorkflowError> {
   // Use a real on-disk database so the restart simulation is meaningful.

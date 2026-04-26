@@ -6,6 +6,8 @@
 //! - [`RpcError`] — JSON envelope + status + [`IntoResponse`](axum::response::IntoResponse)
 //! - [`correlation`] — `x-correlation-id` propagation
 //! - [`span`] — `tracing` span helpers compatible with OpenTelemetry layers
+//! - [`parse_rpc_envelopes_par`](envelope::parse_rpc_envelopes_par) — parallel JSON parse of
+//!   multiple [`RpcEnvelope`] wire bodies (rayon)
 //!
 //! Pair with **`id_effect_axum::json`** (`decode_json_schema`, `JsonSchemaError`) for
 //! schema-validated JSON bodies at the wire edge (see the mdBook *Axum host* chapter).
@@ -23,5 +25,5 @@ mod envelope;
 pub mod error;
 pub mod span;
 
-pub use envelope::{RpcEnvelope, RpcErrorCode};
+pub use envelope::{RpcEnvelope, RpcErrorCode, parse_rpc_envelopes_par};
 pub use error::RpcError;

@@ -17,6 +17,7 @@ name = "id_effect_rpc"
 [dependencies]
 axum = { version = "0.8", features = ["json"] }
 http = "1"
+rayon = "1.12"
 id_effect = { path = "../id_effect", version = "0.2.0", features = [
   "schema-serde",
 ] }
