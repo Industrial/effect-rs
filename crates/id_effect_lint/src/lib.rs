@@ -10,9 +10,12 @@ extern crate rustc_lint;
 extern crate rustc_session;
 extern crate rustc_span;
 
+mod batch_par;
 mod diag;
 mod lints;
 mod utils;
+
+pub use batch_par::map_slice_par;
 
 use lints::{exprs, fn_sigs, items};
 use rustc_lint::{LateContext, LateLintPass, LintStore};

@@ -17,5 +17,8 @@ crate-type = ["cdylib"]
 
 # Links against unstable `rustc_*` crates; build with a nightly toolchain that matches your driver.
 
+[dependencies]
+rayon = "1.12"
+
 [package.metadata.rust-analyzer]
 rustc_private = true
