@@ -131,10 +131,24 @@ pub mod result {
 
 /// Functor operations for `Vec<A>`.
 pub mod vec {
+  use rayon::prelude::*;
+
   /// Map a function over each element.
   #[inline]
   pub fn map<A, B>(fa: Vec<A>, f: impl FnMut(A) -> B) -> Vec<B> {
     fa.into_iter().map(f).collect()
+  }
+
+  /// Like [`map`], but applies `f` in parallel (Rayon). `A` and `B` must be `Send`, and `f` must be
+  /// `Sync` (shared by worker threads).
+  #[inline]
+  pub fn map_par<A, B, F>(fa: Vec<A>, f: F) -> Vec<B>
+  where
+    A: Send,
+    B: Send,
+    F: Fn(A) -> B + Send + Sync,
+  {
+    fa.into_par_iter().map(f).collect()
   }
 
   /// Replace all elements with a constant.
@@ -337,6 +351,11 @@ mod tests {
     #[test]
     fn map_transforms_elements() {
       assert_eq!(vec::map(vec![1, 2, 3], |x| x * 2), vec![2, 4, 6]);
+    }
+
+    #[test]
+    fn map_par_transforms_elements() {
+      assert_eq!(vec::map_par(vec![1, 2, 3, 4], |x| x * 2), vec![2, 4, 6, 8]);
     }
 
     #[test]

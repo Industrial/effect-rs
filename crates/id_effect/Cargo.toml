@@ -36,6 +36,7 @@ flume = "0.12"
 im = "15"
 # 0.2.0 lacks APIs we use (`SignedDuration::from_nanos_i128`, `Error::from_args`).
 jiff = "0.2.23"
+rayon = "1.12"
 serde_json = { version = "1", optional = true }
 tokio = { version = "1.50.0", features = ["macros", "rt", "time", "sync"] }
 

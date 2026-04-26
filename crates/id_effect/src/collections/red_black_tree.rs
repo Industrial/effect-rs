@@ -3,6 +3,7 @@
 //! Effect.ts “red-black” style duplicate-key semantics without exposing a separate RBT implementation.
 
 use im::OrdMap;
+use rayon::prelude::*;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
 
@@ -102,6 +103,29 @@ impl<K: Ord + Clone, V: Clone> RedBlackTree<K, V> {
       .collect()
   }
 
+  /// Like [`Self::greater_than`], but expands per-key value lists in parallel. Pair order matches
+  /// the sequential method (ascending by key, left-to-right per key).
+  pub fn greater_than_par<Q>(&self, bound: &Q) -> Vec<(K, V)>
+  where
+    Q: Ord + ?Sized + Sync,
+    K: Borrow<Q> + Ord + Clone + Send + Sync,
+    V: Clone + Send + Sync,
+  {
+    let rows: Vec<(K, Vec<V>)> = self
+      .inner
+      .iter()
+      .filter(|(k, _)| Borrow::<Q>::borrow(*k).cmp(bound) == Ordering::Greater)
+      .map(|(k, vs)| (k.clone(), vs.clone()))
+      .collect();
+    rows
+      .into_par_iter()
+      .flat_map(|(k, vs)| {
+        let kc = k;
+        vs.into_par_iter().map(move |v| (kc.clone(), v))
+      })
+      .collect()
+  }
+
   /// All `(key, value)` pairs with `key < bound`, ascending.
   pub fn less_than<Q>(&self, bound: &Q) -> Vec<(K, V)>
   where
@@ -115,6 +139,28 @@ impl<K: Ord + Clone, V: Clone> RedBlackTree<K, V> {
       .flat_map(|(k, vs)| {
         let k = k.clone();
         vs.iter().cloned().map(move |v| (k.clone(), v))
+      })
+      .collect()
+  }
+
+  /// Like [`Self::less_than`], but expands per-key value lists in parallel.
+  pub fn less_than_par<Q>(&self, bound: &Q) -> Vec<(K, V)>
+  where
+    Q: Ord + ?Sized + Sync,
+    K: Borrow<Q> + Ord + Clone + Send + Sync,
+    V: Clone + Send + Sync,
+  {
+    let rows: Vec<(K, Vec<V>)> = self
+      .inner
+      .iter()
+      .filter(|(k, _)| Borrow::<Q>::borrow(*k).cmp(bound) == Ordering::Less)
+      .map(|(k, vs)| (k.clone(), vs.clone()))
+      .collect();
+    rows
+      .into_par_iter()
+      .flat_map(|(k, vs)| {
+        let kc = k;
+        vs.into_par_iter().map(move |v| (kc.clone(), v))
       })
       .collect()
   }
@@ -139,6 +185,17 @@ impl<K: Ord + Clone, V: Clone> RedBlackTree<K, V> {
     self.inner.values().map(Vec::len).sum()
   }
 
+  /// Like [`Self::size`], but sums per-key list lengths in parallel.
+  pub fn size_par(&self) -> usize {
+    self
+      .inner
+      .values()
+      .map(Vec::len)
+      .collect::<Vec<_>>()
+      .into_par_iter()
+      .sum()
+  }
+
   /// All `(key, value)` pairs in ascending key order, values per key left-to-right.
   #[inline]
   pub fn entries(&self) -> Vec<(K, V)> {
@@ -148,6 +205,27 @@ impl<K: Ord + Clone, V: Clone> RedBlackTree<K, V> {
       .flat_map(|(k, vs)| {
         let k = k.clone();
         vs.iter().cloned().map(move |v| (k.clone(), v))
+      })
+      .collect()
+  }
+
+  /// Like [`Self::entries`], but expands per-key value lists in parallel. Overall pair order
+  /// matches the sequential method.
+  pub fn entries_par(&self) -> Vec<(K, V)>
+  where
+    K: Send + Sync + Clone,
+    V: Send + Sync + Clone,
+  {
+    let rows: Vec<(K, Vec<V>)> = self
+      .inner
+      .iter()
+      .map(|(k, vs)| (k.clone(), vs.clone()))
+      .collect();
+    rows
+      .into_par_iter()
+      .flat_map(|(k, vs)| {
+        let kc = k;
+        vs.into_par_iter().map(move |v| (kc.clone(), v))
       })
       .collect()
   }
@@ -166,6 +244,16 @@ impl<K: Ord + Clone, V: Clone> RedBlackTree<K, V> {
       .values()
       .flat_map(|vs| vs.iter().cloned())
       .collect()
+  }
+
+  /// Like [`Self::values`], but uses the parallel path from [`Self::entries_par`]. Order is
+  /// unchanged relative to [`Self::values`].
+  pub fn values_par(&self) -> Vec<V>
+  where
+    K: Send + Sync,
+    V: Send + Sync,
+  {
+    self.entries_par().into_iter().map(|(_, v)| v).collect()
   }
 }
 
@@ -289,6 +377,17 @@ mod tests {
     t.insert(1i32, "a");
     t.insert(2, "b");
     assert_eq!(t.entries(), vec![(1, "a"), (2, "b")]);
+  }
+
+  #[test]
+  fn rbt_entries_par_matches_entries() {
+    let mut t = RedBlackTree::empty();
+    t.insert(1i32, "a");
+    t.insert(2, "b");
+    t.insert(1, "b");
+    assert_eq!(t.entries(), t.entries_par());
+    assert_eq!(t.values(), t.values_par());
+    assert_eq!(t.size(), t.size_par());
   }
 
   #[test]

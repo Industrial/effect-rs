@@ -6,6 +6,8 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
+use rayon::prelude::*;
+
 /// Persistent hash map — mirrors Effect.ts-style immutable maps; backed by [`im::HashMap`].
 pub type EffectHashMap<K, V> = im::HashMap<K, V>;
 
@@ -110,6 +112,20 @@ where
   map.into_iter().map(|(k, v)| (k, f(v))).collect()
 }
 
+/// Like [`map_values`], but maps values in parallel (Rayon). `K`, `V`, and `W` must be
+/// `Send` — required for the parallel work pool.
+pub fn map_values_par<K, V, W, F>(map: EffectHashMap<K, V>, f: F) -> EffectHashMap<K, W>
+where
+  K: Hash + Eq + Clone + Send + Sync,
+  V: Clone + Send,
+  W: Clone + Send,
+  F: Fn(V) -> W + Send + Sync,
+{
+  let pairs: Vec<(K, V)> = map.into_iter().collect();
+  let out: Vec<(K, W)> = pairs.into_par_iter().map(|(k, v)| (k, f(v))).collect();
+  from_iter(out)
+}
+
 /// Keeps entries where `pred(key, value)` is true.
 #[inline]
 pub fn filter<K, V, F>(map: &EffectHashMap<K, V>, mut pred: F) -> EffectHashMap<K, V>
@@ -123,6 +139,18 @@ where
     .filter(|(k, v)| pred(k, v))
     .map(|(k, v)| (k.clone(), v.clone()))
     .collect()
+}
+
+/// Like [`filter`], but tests entries in parallel (Rayon).
+pub fn filter_par<K, V, F>(map: &EffectHashMap<K, V>, pred: F) -> EffectHashMap<K, V>
+where
+  K: Hash + Eq + Clone + Send + Sync,
+  V: Clone + Send,
+  F: Fn(&K, &V) -> bool + Send + Sync,
+{
+  let pairs: Vec<(K, V)> = map.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+  let kept: Vec<(K, V)> = pairs.into_par_iter().filter(|(k, v)| pred(k, v)).collect();
+  from_iter(kept)
 }
 
 /// Folds over `(key, value)` pairs (iterator order).
@@ -395,12 +423,28 @@ mod tests {
   }
 
   #[test]
+  fn map_values_par_matches_map_values() {
+    let m = from_iter([("a", 1i32), ("b", 2), ("c", 3)]);
+    let a = map_values(m.clone(), |v| v * 2);
+    let b = map_values_par(m, |v| v * 2);
+    assert_eq!(a, b);
+  }
+
+  #[test]
   fn filter_keeps_matching_entries() {
     let m = from_iter([(1i32, 10), (2, 20), (3, 30)]);
     let m2 = filter(&m, |k, _v| *k > 1);
     assert!(!has(&m2, &1));
     assert!(has(&m2, &2));
     assert!(has(&m2, &3));
+  }
+
+  #[test]
+  fn filter_par_matches_filter() {
+    let m = from_iter([(1i32, 10), (2, 20), (3, 30), (4, 40)]);
+    let a = filter(&m, |k, _v| *k > 1);
+    let b = filter_par(&m, |k, _v| *k > 1);
+    assert_eq!(a, b);
   }
 
   #[test]

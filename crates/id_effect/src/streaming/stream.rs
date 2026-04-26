@@ -21,6 +21,7 @@ use crate::{Chunk, Effect, Or, Predicate};
 use core::any::Any;
 use core::fmt;
 use futures::stream::{self, StreamExt};
+use rayon::prelude::*;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -666,6 +667,60 @@ where
             break;
           };
           out.extend(chunk.into_vec().into_iter().filter(|item| p(item)));
+        }
+        Ok(out)
+      })
+    })
+  }
+
+  /// Like [`Stream::map`], but maps each **chunk** in parallel (Rayon). `f` must be
+  /// [`Sync`] (shared by worker threads) — for effectful or mutable per-chunk work, use
+  /// [`Stream::map_par_n`].
+  #[inline]
+  pub fn map_par<B, F>(self, f: F) -> Stream<B, E, R>
+  where
+    A: Send,
+    B: Send + 'static,
+    F: Fn(A) -> B + Send + Sync + 'static,
+  {
+    let f = Arc::new(f);
+    Stream::new(move |r: &mut R| {
+      let f = Arc::clone(&f);
+      Box::pin(async move {
+        let mut upstream = self;
+        let mut out = Vec::new();
+        loop {
+          let Some(chunk) = upstream.poll_next_chunk(r).await? else {
+            break;
+          };
+          let mapped: Vec<B> = chunk.into_vec().into_par_iter().map(|a| f(a)).collect();
+          out.extend(mapped);
+        }
+        Ok(out)
+      })
+    })
+  }
+
+  /// Like [`Stream::filter`], but tests each **chunk** in parallel.
+  #[inline]
+  pub fn filter_par(self, p: Predicate<A>) -> Stream<A, E, R>
+  where
+    A: Send,
+  {
+    Stream::new(move |r: &mut R| {
+      Box::pin(async move {
+        let mut upstream = self;
+        let mut out = Vec::new();
+        loop {
+          let Some(chunk) = upstream.poll_next_chunk(r).await? else {
+            break;
+          };
+          let kept: Vec<_> = chunk
+            .into_vec()
+            .into_par_iter()
+            .filter(|item| p(item))
+            .collect();
+          out.extend(kept);
         }
         Ok(out)
       })
@@ -1498,6 +1553,45 @@ mod tests {
         .take(3);
       let out = block_on(stream.run_collect().run(&mut ()));
       assert_eq!(out, Ok(vec![20, 40, 60]));
+    }
+
+    #[test]
+    fn map_par_matches_map_for_from_iterable() {
+      let a = block_on(
+        Stream::from_iterable(1..=20i32)
+          .map(|n| n * 2)
+          .run_collect()
+          .run(&mut ()),
+      );
+      let b = block_on(
+        Stream::from_iterable(1..=20i32)
+          .map_par(|n| n * 2)
+          .run_collect()
+          .run(&mut ()),
+      );
+      assert_eq!(a, b);
+    }
+
+    #[test]
+    fn filter_par_matches_filter_for_from_iterable() {
+      let p = Box::new(|n: &i32| *n % 2 == 0);
+      let a = block_on(
+        Stream::from_iterable(0..=30i32)
+          .filter(p.clone())
+          .run_collect()
+          .run(&mut ()),
+      );
+      let b = block_on(
+        Stream::from_iterable(0..=30i32)
+          .filter_par(p)
+          .run_collect()
+          .run(&mut ()),
+      );
+      let mut a = a.expect("a");
+      let mut b = b.expect("b");
+      a.sort();
+      b.sort();
+      assert_eq!(a, b);
     }
 
     #[test]

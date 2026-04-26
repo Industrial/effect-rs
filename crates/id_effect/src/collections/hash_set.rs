@@ -3,6 +3,8 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
+use rayon::prelude::*;
+
 /// Persistent hash set — backed by [`im::HashSet`].
 pub type EffectHashSet<A> = im::HashSet<A>;
 
@@ -101,6 +103,20 @@ where
   A: Hash + Eq + Clone,
 {
   set.iter().cloned().collect()
+}
+
+/// Like [`values`], but clones elements in parallel (Rayon). Output order is unspecified; sort if
+/// a deterministic order is required.
+pub fn values_par<A>(set: &EffectHashSet<A>) -> Vec<A>
+where
+  A: Hash + Eq + Clone + Send + Sync,
+{
+  set
+    .iter()
+    .cloned()
+    .collect::<Vec<_>>()
+    .into_par_iter()
+    .collect()
 }
 
 // ── MutableHashSet ───────────────────────────────────────────────────────────
