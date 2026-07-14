@@ -5,16 +5,28 @@ use super::supervisor::ComputeSupervisor;
 use super::telemetry::{TelemetryEngine, TelemetrySnapshot};
 
 /// How work is placed across cluster nodes.
+///
+/// Every variant selects among nodes that satisfy the per-node
+/// [`ResourcePolicy`]; they differ only in how they choose within that eligible
+/// set. Selection is pure and deterministic (see [`pick_placement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PlacementMode {
-  /// Prefer local Fabric until saturated.
+  /// Least-loaded: pick the eligible node with the most policy headroom.
   LocalFirst,
-  /// Spread load evenly across workers.
+  /// Spread: pick the eligible node with the lowest raw utilization
+  /// (`cpu_pct + mem_pct`), balancing absolute load rather than headroom.
   Spread,
-  /// Pin to a named node.
+  /// Prefer-explicit: pin to a named node, honored only if it is eligible.
   Affinity {
     /// Target node identifier.
     node: String,
+  },
+  /// Round-robin: deterministic rotation across the eligible nodes (ordered by
+  /// name). The caller supplies `turn`; the chosen node is `eligible[turn % len]`.
+  /// Stateless and pure — advancing the rotation is the caller's responsibility.
+  RoundRobin {
+    /// Monotonic turn counter supplied by the caller.
+    turn: u64,
   },
 }
 
@@ -49,6 +61,47 @@ pub struct NodeCandidate {
   pub snapshot: TelemetrySnapshot,
 }
 
+/// Load telemetry a mesh node reports about itself, the mesh-facing input to
+/// placement.
+///
+/// `id_effect_node` gathers one [`LoadReport`] per reachable node (piggybacked
+/// on membership gossip) and feeds a slice of them to [`place`]. This type is
+/// deliberately dependency-free (no serde) so the core crate stays lean; the
+/// mesh layer owns wire encoding and converts to/from its own transport form.
+/// Convert to a [`NodeCandidate`] with [`From`] before scoring.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LoadReport {
+  /// Logical node name (matches `Mesh::node_name`).
+  pub node: String,
+  /// Fraction of CPU in use, `[0.0, 1.0]`.
+  pub cpu_pct: f32,
+  /// Fraction of memory in use, `[0.0, 1.0]`.
+  pub mem_pct: f32,
+}
+
+impl LoadReport {
+  /// Build a report from a node name and raw utilization fractions.
+  pub fn new(node: impl Into<String>, cpu_pct: f32, mem_pct: f32) -> Self {
+    Self {
+      node: node.into(),
+      cpu_pct,
+      mem_pct,
+    }
+  }
+}
+
+impl From<&LoadReport> for NodeCandidate {
+  fn from(report: &LoadReport) -> Self {
+    NodeCandidate {
+      name: report.node.clone(),
+      snapshot: TelemetrySnapshot {
+        cpu_pct: report.cpu_pct,
+        mem_pct: report.mem_pct,
+      },
+    }
+  }
+}
+
 /// Score in `[0.0, 1.0]` — higher is better (more headroom).
 pub fn score_candidate(candidate: &NodeCandidate, policy: &ResourcePolicy) -> f32 {
   if !candidate.snapshot.satisfies(policy) {
@@ -57,28 +110,76 @@ pub fn score_candidate(candidate: &NodeCandidate, policy: &ResourcePolicy) -> f3
   candidate.snapshot.min_headroom(policy).clamp(0.0, 1.0)
 }
 
-/// Pick the best candidate under `mode` (empty → None).
+/// Pick the best eligible candidate under the policy's [`PlacementMode`].
+///
+/// A candidate is *eligible* when it satisfies the per-node policy
+/// ([`score_candidate`] returns > 0). Ties are broken deterministically by node
+/// name, so the result never depends on iteration order. Returns `None` when no
+/// candidate is eligible.
 pub fn pick_placement<'a, I: IntoIterator<Item = &'a NodeCandidate>>(
   candidates: I,
   policy: &ClusterResourcePolicy,
 ) -> Option<&'a NodeCandidate> {
-  let mut best: Option<(&NodeCandidate, f32)> = None;
-  for c in candidates {
-    match &policy.placement {
-      PlacementMode::Affinity { node } if &c.name != node => continue,
-      PlacementMode::Affinity { .. } | PlacementMode::LocalFirst | PlacementMode::Spread => {}
+  let mut eligible: Vec<(&'a NodeCandidate, f32)> = candidates
+    .into_iter()
+    .filter(|c| match &policy.placement {
+      PlacementMode::Affinity { node } => &c.name == node,
+      _ => true,
+    })
+    .filter_map(|c| {
+      let score = score_candidate(c, &policy.per_node);
+      (score > 0.0).then_some((c, score))
+    })
+    .collect();
+
+  match &policy.placement {
+    // Prefer-explicit: the named node survives the eligibility filter or nothing.
+    PlacementMode::Affinity { .. } => eligible.into_iter().next().map(|(c, _)| c),
+    // Least-loaded: most policy headroom first, lowest name to break ties.
+    PlacementMode::LocalFirst => {
+      eligible.sort_by(|(ca, sa), (cb, sb)| {
+        sb.partial_cmp(sa)
+          .unwrap_or(std::cmp::Ordering::Equal)
+          .then_with(|| ca.name.cmp(&cb.name))
+      });
+      eligible.into_iter().next().map(|(c, _)| c)
     }
-    let s = score_candidate(c, &policy.per_node);
-    if s <= 0.0 {
-      continue;
+    // Spread: lowest absolute utilization first, lowest name to break ties.
+    PlacementMode::Spread => {
+      eligible.sort_by(|(ca, _), (cb, _)| {
+        let load_a = ca.snapshot.cpu_pct + ca.snapshot.mem_pct;
+        let load_b = cb.snapshot.cpu_pct + cb.snapshot.mem_pct;
+        load_a
+          .partial_cmp(&load_b)
+          .unwrap_or(std::cmp::Ordering::Equal)
+          .then_with(|| ca.name.cmp(&cb.name))
+      });
+      eligible.into_iter().next().map(|(c, _)| c)
     }
-    match best {
-      None => best = Some((c, s)),
-      Some((_, bs)) if s > bs => best = Some((c, s)),
-      _ => {}
+    // Round-robin: deterministic rotation over eligible nodes ordered by name.
+    PlacementMode::RoundRobin { turn } => {
+      eligible.sort_by(|(ca, _), (cb, _)| ca.name.cmp(&cb.name));
+      if eligible.is_empty() {
+        None
+      } else {
+        let idx = (*turn as usize) % eligible.len();
+        Some(eligible[idx].0)
+      }
     }
   }
-  best.map(|(c, _)| c)
+}
+
+/// Single placement entry point: choose a node for new work from mesh load
+/// telemetry.
+///
+/// Adapts each [`LoadReport`] into a [`NodeCandidate`], applies the policy's
+/// [`PlacementMode`], and returns the chosen node's name. Pure and deterministic
+/// — no clock, no Tokio, no interior mutability — so it is unit-testable without
+/// a live cluster. Returns `None` when no reported node satisfies the per-node
+/// policy.
+pub fn place(reports: &[LoadReport], policy: &ClusterResourcePolicy) -> Option<String> {
+  let candidates: Vec<NodeCandidate> = reports.iter().map(NodeCandidate::from).collect();
+  pick_placement(candidates.iter(), policy).map(|c| c.name.clone())
 }
 
 /// Serializable job payload produced by [`ComputeSupervisor::scale_out`].
@@ -179,5 +280,128 @@ mod tests {
     assert_eq!(cluster.global, policy);
     assert_eq!(cluster.per_node, policy);
     assert_eq!(cluster.placement, PlacementMode::LocalFirst);
+  }
+
+  fn cluster_with(mode: PlacementMode, per: ResourcePolicy) -> ClusterResourcePolicy {
+    ClusterResourcePolicy {
+      global: per.clone(),
+      per_node: per,
+      placement: mode,
+    }
+  }
+
+  #[test]
+  fn load_report_adapts_to_candidate() {
+    let report = LoadReport::new("n1", 0.3, 0.6);
+    let candidate = NodeCandidate::from(&report);
+    assert_eq!(candidate.name, "n1");
+    assert!((candidate.snapshot.cpu_pct - 0.3).abs() < 0.001);
+    assert!((candidate.snapshot.mem_pct - 0.6).abs() < 0.001);
+  }
+
+  #[test]
+  fn place_affinity_prefers_explicit_node() {
+    let cluster = cluster_with(
+      PlacementMode::Affinity { node: "b".into() },
+      ResourcePolicy::memory_cap_max_cpu(0.95),
+    );
+    let reports = [
+      // `a` is the least loaded, but affinity must still pin to `b`.
+      LoadReport::new("a", 0.1, 0.1),
+      LoadReport::new("b", 0.5, 0.5),
+    ];
+    assert_eq!(place(&reports, &cluster).as_deref(), Some("b"));
+  }
+
+  #[test]
+  fn place_affinity_is_none_when_target_ineligible() {
+    let cluster = cluster_with(
+      PlacementMode::Affinity { node: "b".into() },
+      ResourcePolicy::memory_cap_max_cpu(0.85),
+    );
+    let reports = [
+      LoadReport::new("a", 0.1, 0.1),
+      // `b` breaches the 0.85 memory ceiling, so it is ineligible.
+      LoadReport::new("b", 0.9, 0.9),
+    ];
+    assert_eq!(place(&reports, &cluster), None);
+  }
+
+  #[test]
+  fn place_local_first_picks_most_headroom() {
+    let cluster = cluster_with(
+      PlacementMode::LocalFirst,
+      ResourcePolicy::memory_cap_max_cpu(0.95),
+    );
+    let reports = [
+      LoadReport::new("a", 0.8, 0.8),
+      LoadReport::new("b", 0.2, 0.2),
+      LoadReport::new("c", 0.5, 0.5),
+    ];
+    assert_eq!(place(&reports, &cluster).as_deref(), Some("b"));
+  }
+
+  #[test]
+  fn place_spread_and_local_first_diverge() {
+    let per = ResourcePolicy::memory_cap_max_cpu(0.85);
+    let reports = [
+      // sum 0.80, headroom min(0.90, 0.15) = 0.15
+      LoadReport::new("a", 0.10, 0.70),
+      // sum 0.85, headroom min(0.45, 0.55) = 0.45
+      LoadReport::new("b", 0.55, 0.30),
+    ];
+    // Spread minimizes absolute load -> a.
+    assert_eq!(
+      place(&reports, &cluster_with(PlacementMode::Spread, per.clone())).as_deref(),
+      Some("a")
+    );
+    // LocalFirst maximizes policy headroom -> b.
+    assert_eq!(
+      place(&reports, &cluster_with(PlacementMode::LocalFirst, per)).as_deref(),
+      Some("b")
+    );
+  }
+
+  #[test]
+  fn place_round_robin_rotates_over_eligible() {
+    let per = ResourcePolicy::memory_cap_max_cpu(0.95);
+    let reports = [
+      LoadReport::new("a", 0.1, 0.1),
+      LoadReport::new("b", 0.2, 0.2),
+      LoadReport::new("c", 0.3, 0.3),
+    ];
+    let picks: Vec<Option<String>> = (0u64..4)
+      .map(|turn| {
+        place(
+          &reports,
+          &cluster_with(PlacementMode::RoundRobin { turn }, per.clone()),
+        )
+      })
+      .collect();
+    assert_eq!(
+      picks,
+      vec![
+        Some("a".to_string()),
+        Some("b".to_string()),
+        Some("c".to_string()),
+        Some("a".to_string()),
+      ]
+    );
+  }
+
+  #[test]
+  fn place_returns_none_when_all_saturated() {
+    let cluster = ClusterResourcePolicy::local_first(ResourcePolicy::memory_cap_max_cpu(0.85));
+    let reports = [
+      LoadReport::new("a", 0.99, 0.99),
+      LoadReport::new("b", 0.90, 0.95),
+    ];
+    assert_eq!(place(&reports, &cluster), None);
+  }
+
+  #[test]
+  fn place_empty_reports_is_none() {
+    let cluster = ClusterResourcePolicy::local_first(ResourcePolicy::memory_cap_max_cpu(0.95));
+    assert_eq!(place(&[], &cluster), None);
   }
 }

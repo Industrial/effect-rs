@@ -23,8 +23,8 @@ pub use adaptive::{
 };
 pub use admission::AdmissionController;
 pub use cluster::{
-  ClusterResourcePolicy, FabricJobSpec, NodeCandidate, PlacementMode, pick_placement,
-  score_candidate,
+  ClusterResourcePolicy, FabricJobSpec, LoadReport, NodeCandidate, PlacementMode, pick_placement,
+  place, score_candidate,
 };
 pub(crate) use dispatch::parallel_if_profitable;
 pub use fabric::ComputeFabric;

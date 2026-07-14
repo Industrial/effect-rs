@@ -83,7 +83,7 @@ When local Fabric saturates, `RebalanceStrategy::ScaleOut` builds a [`FabricJobS
 
 Example: `123_compute_fabric_cluster.rs` (two-node offload with `MemoryJobRunner`).
 
-[`ClusterResourcePolicy`](../../src/compute/cluster.rs) combines global and per-node caps with [`PlacementMode`](../../src/compute/cluster.rs) (`LocalFirst`, `Spread`, `Affinity`).
+[`ClusterResourcePolicy`](../../src/compute/cluster.rs) combines global and per-node caps with [`PlacementMode`](../../src/compute/cluster.rs) (`LocalFirst`, `Spread`, `Affinity`, `RoundRobin`).
 
 ## Further reading
 

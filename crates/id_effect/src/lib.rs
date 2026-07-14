@@ -98,10 +98,10 @@ pub use collections::{
 };
 pub use compute::{
   AdaptiveContext, AdmissionController, ClusterResourcePolicy, ComputeFabric, ComputeSupervisor,
-  CpuSpreadBucket, FabricJobSpec, FiberPool, MetricMode, MetricPolicy, MockTelemetry,
+  CpuSpreadBucket, FabricJobSpec, FiberPool, LoadReport, MetricMode, MetricPolicy, MockTelemetry,
   PlacementMode, RebalanceStrategy, ResourcePolicy, SysinfoTelemetry, TelemetryEngine,
   TelemetrySnapshot, WorkProfile, configure_rayon_threads, ensure_run_context, install_fabric,
-  install_parallel, refresh_adaptive_context,
+  install_parallel, place, refresh_adaptive_context,
 };
 pub use concurrency::{
   CancellationToken, FiberHandle, FiberId, FiberRef, FiberStatus, Supervisor, SupervisorPolicy,
