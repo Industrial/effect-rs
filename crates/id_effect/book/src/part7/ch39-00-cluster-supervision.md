@@ -11,3 +11,8 @@ takeover) using the behavior registry + mesh placement.
 
 Fabric placement (`pick_placement` / `scale_out_placed`) scores candidate
 nodes by telemetry headroom under `ClusterResourcePolicy`.
+
+**Runnable examples:**
+`id_effect_node/examples/132_distributed_supervisor_failover.rs` (takeover on
+`NodeDown`) and `id_effect_node/examples/133_cluster_stream_fanout.rs`
+(`fanout_cast` to a process group across nodes).

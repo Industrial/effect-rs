@@ -1,3 +1,16 @@
+//! CP [`ClusterSingleton`] — at most one holder cluster-wide.
+//!
+//! Netsplit story (ADR 0009): unavailable without quorum. Production path
+//! uses Postgres advisory-lock leases (`pg` feature via `id_effect_sql_pg`).
+//! This module ships an **in-memory lease** suitable for single-process
+//! tests and as the interface the PG backend implements.
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+
+use id_effect_process::Pid;
+
 /// Derive `(key1, key2)` for `pg_try_advisory_lock(key1, key2)` from a singleton name.
 ///
 /// Production `SingletonLease` backends run:
@@ -10,14 +23,6 @@ pub fn advisory_lock_keys(name: &str) -> (i32, i32) {
   let v = h.finish();
   ((v >> 32) as i32, v as i32)
 }
-
-/// CP [`ClusterSingleton`] — at most one holder cluster-wide.
-
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-
-use id_effect_process::Pid;
 
 /// Why a singleton acquire failed.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -42,12 +47,7 @@ impl std::error::Error for SingletonError {}
 /// Abstract lease backend.
 pub trait SingletonLease: Send + Sync {
   /// Try to acquire `name` for `holder` until `ttl` elapses.
-  fn try_acquire(
-    &self,
-    name: &str,
-    holder: &str,
-    ttl: Duration,
-  ) -> Result<(), SingletonError>;
+  fn try_acquire(&self, name: &str, holder: &str, ttl: Duration) -> Result<(), SingletonError>;
 
   /// Renew an existing lease (must already be held by `holder`).
   fn renew(&self, name: &str, holder: &str, ttl: Duration) -> Result<(), SingletonError>;
@@ -83,12 +83,7 @@ impl MemoryLease {
 }
 
 impl SingletonLease for MemoryLease {
-  fn try_acquire(
-    &self,
-    name: &str,
-    holder: &str,
-    ttl: Duration,
-  ) -> Result<(), SingletonError> {
+  fn try_acquire(&self, name: &str, holder: &str, ttl: Duration) -> Result<(), SingletonError> {
     let mut map = self.inner.lock().expect("lease");
     Self::sweep(&mut map);
     match map.get(name) {
@@ -166,7 +161,9 @@ impl ClusterSingleton {
 
   /// Attempt to become the singleton; records `pid` on success.
   pub fn try_become(&self, pid: &Pid) -> Result<(), SingletonError> {
-    self.lease.try_acquire(&self.name, &self.holder_id, self.ttl)?;
+    self
+      .lease
+      .try_acquire(&self.name, &self.holder_id, self.ttl)?;
     *self.local_pid.lock().expect("pid") = Some(pid.clone());
     Ok(())
   }
@@ -202,8 +199,18 @@ mod tests {
   #[test]
   fn only_one_holder() {
     let lease = Arc::new(MemoryLease::new());
-    let a = ClusterSingleton::new("leader", "a", Arc::clone(&lease) as _, Duration::from_secs(5));
-    let b = ClusterSingleton::new("leader", "b", Arc::clone(&lease) as _, Duration::from_secs(5));
+    let a = ClusterSingleton::new(
+      "leader",
+      "a",
+      Arc::clone(&lease) as _,
+      Duration::from_secs(5),
+    );
+    let b = ClusterSingleton::new(
+      "leader",
+      "b",
+      Arc::clone(&lease) as _,
+      Duration::from_secs(5),
+    );
     let pid = Pid::from_parts(NodeName::new("a@t"), 1, 1);
     a.try_become(&pid).unwrap();
     assert!(a.is_holder());

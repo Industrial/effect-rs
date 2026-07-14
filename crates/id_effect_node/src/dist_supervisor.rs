@@ -9,9 +9,9 @@ use std::sync::{Arc, Mutex};
 
 use id_effect_process::Pid;
 
-use crate::mesh::Mesh;
-use crate::membership::MembershipEvent;
 use crate::envelope::RemoteFault;
+use crate::membership::MembershipEvent;
+use crate::mesh::Mesh;
 
 /// A child managed across the cluster.
 #[derive(Clone, Debug)]
@@ -103,6 +103,11 @@ impl DistributedSupervisor {
   /// Running child count.
   pub fn len(&self) -> usize {
     self.children.lock().expect("children").len()
+  }
+
+  /// Whether any children are managed.
+  pub fn is_empty(&self) -> bool {
+    self.children.lock().expect("children").is_empty()
   }
 
   /// Snapshot of (child id, pid, node).

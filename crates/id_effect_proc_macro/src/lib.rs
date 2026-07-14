@@ -112,4 +112,3 @@ pub fn derive_schema_parser(input: TokenStream) -> TokenStream {
 pub fn distributed_behavior(attr: TokenStream, item: TokenStream) -> TokenStream {
   distributed_behavior::expand(attr, item)
 }
-

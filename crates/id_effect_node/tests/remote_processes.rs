@@ -5,12 +5,8 @@ use std::time::Duration;
 
 use id_effect::runtime::Never;
 use id_effect::{Effect, succeed};
-use id_effect_node::{
-  BehaviorRegistry, Mesh, MeshFabric, NodeId, RemoteFault,
-};
-use id_effect_process::{
-  ExitReason, Next, NodeName, Process, ProcessCtx, ProcessNode,
-};
+use id_effect_node::{BehaviorRegistry, Mesh, MeshFabric, NodeId, RemoteFault};
+use id_effect_process::{ExitReason, Next, NodeName, Process, ProcessCtx, ProcessNode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -74,18 +70,10 @@ fn mesh_pair() -> (Arc<Mesh>, Arc<Mesh>, MeshFabric) {
 
   let name_a = NodeName::new("a@test");
   let name_b = NodeName::new("b@test");
-  let a = Mesh::new(
-    NodeId::fresh(&name_a),
-    ProcessNode::threads(name_a),
-    reg_a,
-  )
-  .with_fabric(fabric.clone());
-  let b = Mesh::new(
-    NodeId::fresh(&name_b),
-    ProcessNode::threads(name_b),
-    reg_b,
-  )
-  .with_fabric(fabric.clone());
+  let a = Mesh::new(NodeId::fresh(&name_a), ProcessNode::threads(name_a), reg_a)
+    .with_fabric(fabric.clone());
+  let b = Mesh::new(NodeId::fresh(&name_b), ProcessNode::threads(name_b), reg_b)
+    .with_fabric(fabric.clone());
   (a, b, fabric)
 }
 
@@ -95,13 +83,7 @@ fn remote_spawn_cast_call_round_trip() {
   let args = postcard::to_allocvec(&()).expect("args");
 
   let pid = a
-    .remote_spawn(
-      "b@test",
-      "counter",
-      args,
-      None,
-      Duration::from_secs(2),
-    )
+    .remote_spawn("b@test", "counter", args, None, Duration::from_secs(2))
     .expect("spawn");
   assert_eq!(pid.node().as_str(), "b@test");
 
@@ -127,13 +109,7 @@ fn remote_monitor_fires_noconnection_on_peer_down() {
   let (a, b, _fabric) = mesh_pair();
   let args = postcard::to_allocvec(&()).unwrap();
   let pid = a
-    .remote_spawn(
-      "b@test",
-      "counter",
-      args,
-      None,
-      Duration::from_secs(2),
-    )
+    .remote_spawn("b@test", "counter", args, None, Duration::from_secs(2))
     .expect("spawn");
 
   let seen = Arc::new(std::sync::Mutex::new(None));
@@ -159,13 +135,7 @@ fn remote_monitor_fires_noconnection_on_peer_down() {
 fn unknown_behavior_is_rejected() {
   let (a, _b, _) = mesh_pair();
   let err = a
-    .remote_spawn(
-      "b@test",
-      "nope",
-      vec![],
-      None,
-      Duration::from_secs(1),
-    )
+    .remote_spawn("b@test", "nope", vec![], None, Duration::from_secs(1))
     .unwrap_err();
   assert!(matches!(err, RemoteFault::UnknownBehavior(_)));
 }

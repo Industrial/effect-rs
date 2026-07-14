@@ -204,14 +204,14 @@ impl Mesh {
       return self.spawn_local(behavior, &args, link_to);
     }
     let spawn_id = self.alloc_id();
-    let reply: Deferred<Pid, RemoteFault> = run_blocking(Deferred::make(), ())
-      .unwrap_or_else(|_| unreachable!("Deferred::make"));
-    self
-      .inner
-      .pending_spawns
-      .lock()
-      .expect("spawns")
-      .insert(spawn_id, PendingSpawn { reply: reply.clone() });
+    let reply: Deferred<Pid, RemoteFault> =
+      run_blocking(Deferred::make(), ()).unwrap_or_else(|_| unreachable!("Deferred::make"));
+    self.inner.pending_spawns.lock().expect("spawns").insert(
+      spawn_id,
+      PendingSpawn {
+        reply: reply.clone(),
+      },
+    );
     self.send_to(
       node_name,
       ProcessEnvelope::Spawn {
@@ -262,23 +262,20 @@ impl Mesh {
     timeout: Duration,
   ) -> Result<Vec<u8>, RemoteFault> {
     if to.node().as_str() == self.node_name() {
-      let reply: Deferred<Vec<u8>, RemoteFault> = run_blocking(Deferred::make(), ())
-        .unwrap_or_else(|_| unreachable!("Deferred::make"));
-      self
-        .inner
-        .registry
-        .deliver_call(to, &msg, reply.clone())?;
+      let reply: Deferred<Vec<u8>, RemoteFault> =
+        run_blocking(Deferred::make(), ()).unwrap_or_else(|_| unreachable!("Deferred::make"));
+      self.inner.registry.deliver_call(to, &msg, reply.clone())?;
       return self.await_deferred(reply, timeout);
     }
     let call_id = self.alloc_id();
-    let reply: Deferred<Vec<u8>, RemoteFault> = run_blocking(Deferred::make(), ())
-      .unwrap_or_else(|_| unreachable!("Deferred::make"));
-    self
-      .inner
-      .pending_calls
-      .lock()
-      .expect("calls")
-      .insert(call_id, PendingCall { reply: reply.clone() });
+    let reply: Deferred<Vec<u8>, RemoteFault> =
+      run_blocking(Deferred::make(), ()).unwrap_or_else(|_| unreachable!("Deferred::make"));
+    self.inner.pending_calls.lock().expect("calls").insert(
+      call_id,
+      PendingCall {
+        reply: reply.clone(),
+      },
+    );
     self.send_to(
       to.node().as_str(),
       ProcessEnvelope::Call {
@@ -298,18 +295,13 @@ impl Mesh {
     }
     let monitor = MonitorRef::fresh();
     let key = monitor.into_inner();
-    self
-      .inner
-      .remote_monitors
-      .lock()
-      .expect("monitors")
-      .insert(
-        key,
-        RemoteMonitor {
-          sink,
-          target: target.clone(),
-        },
-      );
+    self.inner.remote_monitors.lock().expect("monitors").insert(
+      key,
+      RemoteMonitor {
+        sink,
+        target: target.clone(),
+      },
+    );
     let _ = self.send_to(
       target.node().as_str(),
       ProcessEnvelope::Monitor {
@@ -335,8 +327,8 @@ impl Mesh {
         to, call_id, msg, ..
       } => {
         let pid = to.to_pid();
-        let reply: Deferred<Vec<u8>, RemoteFault> = run_blocking(Deferred::make(), ())
-          .unwrap_or_else(|_| unreachable!("Deferred::make"));
+        let reply: Deferred<Vec<u8>, RemoteFault> =
+          run_blocking(Deferred::make(), ()).unwrap_or_else(|_| unreachable!("Deferred::make"));
         let bridge = reply.clone();
         let mesh = self.clone();
         let from = pid.node().as_str().to_string();
@@ -363,7 +355,7 @@ impl Mesh {
             Err(id_effect::Cause::Fail(f)) => Err(f),
             Err(_) => Err(RemoteFault::Down(ExitReasonWire::Interrupted)),
           };
-          let _ = mesh.reply_call_best_effort(call_id, result);
+          mesh.reply_call_best_effort(call_id, result);
         });
         Ok(())
       }
@@ -396,12 +388,7 @@ impl Mesh {
         let result = self
           .inner
           .registry
-          .spawn(
-            &self.inner.process,
-            &behavior,
-            &args,
-            link.as_ref(),
-          )
+          .spawn(&self.inner.process, &behavior, &args, link.as_ref())
           .map(|pid| PidWire::from(&pid));
         // Reply to the other fabric peer(s) — spawn reply needs caller node.
         self.reply_spawn_best_effort(spawn_id, result);
@@ -432,7 +419,7 @@ impl Mesh {
         // Record who is monitoring so Down can route back — unknown peer in
         // fabric; fire Down via fabric broadcast of Down envelope.
         let sink: MonitorSink = Box::new(move |_m, target_pid, reason| {
-          let _ = mesh.broadcast_except_self(ProcessEnvelope::Down {
+          mesh.broadcast_except_self(ProcessEnvelope::Down {
             monitor,
             target: PidWire::from(&target_pid),
             reason: ExitReasonWire::from(&reason),
@@ -495,10 +482,7 @@ impl Mesh {
       ProcessEnvelope::ExitSignal { from, to, reason } => {
         let target = to.to_pid();
         if target.node().as_str() == self.node_name() {
-          self
-            .inner
-            .process
-            .exit(&target, ExitReason::from(&reason));
+          self.inner.process.exit(&target, ExitReason::from(&reason));
           let _ = from;
         }
         Ok(())
@@ -584,8 +568,7 @@ impl Mesh {
       .map_err(|e| RemoteFault::Decode(e.to_string()))?;
     match frame {
       Frame::Data(bytes) => {
-        let envelope =
-          decode_envelope(&bytes).map_err(|e| RemoteFault::Decode(e.to_string()))?;
+        let envelope = decode_envelope(&bytes).map_err(|e| RemoteFault::Decode(e.to_string()))?;
         self.handle_envelope(envelope)
       }
       Frame::Close(_) => Err(RemoteFault::NoProc),

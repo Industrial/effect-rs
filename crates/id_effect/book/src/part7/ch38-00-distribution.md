@@ -17,3 +17,5 @@ mesh.remote_cast(&pid, postcard::to_allocvec(&msg)?)?;
 ```
 
 On `NodeDown`, remote monitors receive `ExitReason::NoConnection`.
+
+**Runnable example:** `id_effect_node/examples/131_two_node_cluster.rs`.

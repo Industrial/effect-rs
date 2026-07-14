@@ -23,3 +23,5 @@ let handle = SupervisorSpec::new(Strategy::OneForOne)
 
 Restart intensity is measured on the injected `Clock` — use `TestClock` for
 deterministic restart-storm tests.
+
+**Runnable example:** `id_effect_process/examples/130_process_tree.rs`.

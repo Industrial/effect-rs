@@ -317,6 +317,7 @@ mod tests {
       name: "job".into(),
       payload: b"x".to_vec(),
       work_profile: None,
+      target_node: None,
     };
     let rec = run_blocking(runner.enqueue(spec), ()).unwrap();
     assert_eq!(rec.spec.id, "fixed-id");

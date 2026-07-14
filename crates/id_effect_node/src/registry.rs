@@ -18,9 +18,8 @@ pub type SpawnFn =
 pub type WireFn = Arc<dyn Fn(&[u8]) -> Result<(), RemoteFault> + Send + Sync>;
 
 /// Call with deferred byte reply.
-pub type CallWireFn = Arc<
-  dyn Fn(&[u8], Deferred<Vec<u8>, RemoteFault>) -> Result<(), RemoteFault> + Send + Sync,
->;
+pub type CallWireFn =
+  Arc<dyn Fn(&[u8], Deferred<Vec<u8>, RemoteFault>) -> Result<(), RemoteFault> + Send + Sync>;
 
 #[derive(Clone)]
 struct Route {
@@ -149,8 +148,8 @@ impl BehaviorRegistry {
     let name = name.into();
     let routes = Arc::clone(&self.routes);
     let spawn: SpawnFn = Arc::new(move |node, args_bytes, link_to| {
-      let args: P::Args = postcard::from_bytes(args_bytes)
-        .map_err(|e| RemoteFault::Decode(e.to_string()))?;
+      let args: P::Args =
+        postcard::from_bytes(args_bytes).map_err(|e| RemoteFault::Decode(e.to_string()))?;
       let addr = match link_to {
         Some(parent) => node.spawn_linked_to::<P>(parent, args, P::Env::default()),
         None => node.spawn::<P>(args, P::Env::default()),
@@ -158,7 +157,9 @@ impl BehaviorRegistry {
       install_route::<P>(&routes, addr.pid().clone(), addr.clone_mailbox());
       Ok(addr.pid().clone())
     });
-    self.entries.insert(name.clone(), BehaviorEntry { name, spawn });
+    self
+      .entries
+      .insert(name.clone(), BehaviorEntry { name, spawn });
   }
 
   /// Adopt local process for remote delivery.
@@ -176,11 +177,8 @@ impl BehaviorRegistry {
   }
 }
 
-fn install_route<P>(
-  routes: &Arc<Mutex<HashMap<Pid, Route>>>,
-  pid: Pid,
-  mailbox: Queue<ProcMsg<P>>,
-) where
+fn install_route<P>(routes: &Arc<Mutex<HashMap<Pid, Route>>>, pid: Pid, mailbox: Queue<ProcMsg<P>>)
+where
   P: Process,
   P::Call: Serialize + DeserializeOwned + Send + 'static,
   P::Reply: Serialize + DeserializeOwned + Clone + Send + Sync + 'static,
@@ -228,9 +226,8 @@ fn install_route<P>(
             let _ = reply.try_succeed(encoded);
           }
           Err(e) => {
-            let _ = reply.try_fail_cause(id_effect::Cause::fail(RemoteFault::Decode(
-              e.to_string(),
-            )));
+            let _ =
+              reply.try_fail_cause(id_effect::Cause::fail(RemoteFault::Decode(e.to_string())));
           }
         },
         Err(id_effect::Cause::Fail(CallError::Down(reason))) => {
@@ -251,5 +248,8 @@ fn install_route<P>(
       Ok(())
     })
   };
-  routes.lock().expect("routes").insert(pid, Route { cast, info, call });
+  routes
+    .lock()
+    .expect("routes")
+    .insert(pid, Route { cast, info, call });
 }

@@ -34,5 +34,9 @@ fn main() {
     .child(ChildSpec::worker::<Ping, _>("ping", || ((), ())))
     .start(&node);
   std::thread::sleep(Duration::from_millis(50));
-  println!("supervisor pid {} children={:?}", handle.pid(), node.table().len());
+  println!(
+    "supervisor pid {} children={:?}",
+    handle.pid(),
+    node.table().len()
+  );
 }

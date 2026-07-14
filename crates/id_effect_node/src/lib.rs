@@ -27,7 +27,7 @@ pub use discovery::{ChainedDiscovery, Discovery, DnsDiscovery, StaticDiscovery};
 pub use dist_supervisor::{DistChildSpec, DistributedSupervisor};
 pub use envelope::{
   ExitReasonWire, PidWire, ProcessEnvelope, RemoteFault, TraceContext, decode_envelope,
-  encode_envelope, empty_trace, trace_pair,
+  empty_trace, encode_envelope, trace_pair,
 };
 pub use fanout::{SharedGroups, fanout_cast, fanout_cast_on_node};
 pub use groups::{Dot, OrSwot, ProcessGroups};

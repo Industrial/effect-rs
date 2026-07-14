@@ -51,7 +51,9 @@ impl OrSwot {
       counter: *counter,
     };
     let wire = PidWire::from(pid);
-    self.entries.insert(Self::key(&wire), Entry { pid: wire, dot });
+    self
+      .entries
+      .insert(Self::key(&wire), Entry { pid: wire, dot });
   }
 
   /// Remove pid if present.

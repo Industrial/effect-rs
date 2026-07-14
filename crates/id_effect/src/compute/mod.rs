@@ -33,4 +33,6 @@ pub use policy::{MetricMode, MetricPolicy, RebalanceStrategy, ResourcePolicy, Wo
 pub use rayon_pool::{configure_rayon_threads, install_parallel};
 pub use spread::CpuSpreadBucket;
 pub use supervisor::ComputeSupervisor;
-pub use telemetry::{ClusterTelemetry, MockTelemetry, SysinfoTelemetry, TelemetryEngine, TelemetrySnapshot};
+pub use telemetry::{
+  ClusterTelemetry, MockTelemetry, SysinfoTelemetry, TelemetryEngine, TelemetrySnapshot,
+};

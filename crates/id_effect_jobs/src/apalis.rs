@@ -48,6 +48,7 @@ impl From<ApalisJobPayload> for JobSpec {
       name: value.name,
       payload: value.payload,
       work_profile: None,
+      target_node: None,
     }
   }
 }

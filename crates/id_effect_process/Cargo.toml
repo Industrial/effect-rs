@@ -18,4 +18,10 @@ id_effect = { path = "../id_effect", version = "0.4.0" }
 
 [dev-dependencies]
 pollster = "0.4"
-tokio = { version = "1.50.0", features = ["rt", "rt-multi-thread", "macros", "time", "sync"] }
+tokio = { version = "1.50.0", features = [
+  "rt",
+  "rt-multi-thread",
+  "macros",
+  "time",
+  "sync",
+] }

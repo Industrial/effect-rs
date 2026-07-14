@@ -67,6 +67,8 @@
 #![allow(effect_no_async_fn_application)]
 
 pub mod channel_bridge;
+#[cfg(feature = "cluster")]
+pub mod cluster;
 pub mod health;
 pub mod json;
 pub mod routing;
