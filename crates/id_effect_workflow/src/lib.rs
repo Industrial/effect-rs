@@ -29,7 +29,10 @@ mod duroxide_journal;
 mod providers;
 
 pub use error::WorkflowError;
-pub use journal::{DistributedJournalConfig, NetworkJournalStub, StepJournal};
+pub use journal::{
+  DistributedJournalConfig, DistributedStepJournal, JournalServer, JournalTransport,
+  LoopbackTransport, NetworkJournalStub, RemoteStepJournal, StepJournal,
+};
 
 #[cfg(feature = "memory")]
 pub use sqlite_log::DurableWorkflowLog;

@@ -39,6 +39,8 @@ pub use membership::{
 pub use mesh::{Mesh, MeshFabric, PeerSender};
 pub use registry::{BehaviorEntry, BehaviorRegistry};
 pub use session::{Session, SessionError};
+#[cfg(feature = "pg")]
+pub use singleton::PgAdvisoryLease;
 pub use singleton::{
   ClusterSingleton, MemoryLease, SingletonError, SingletonLease, advisory_lock_keys,
 };

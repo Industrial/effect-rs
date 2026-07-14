@@ -16,15 +16,15 @@
 //! - [`ShutdownPolicy::Infinity`]: trappable `Shutdown`, wait forever
 //!   (reserved for child supervisors).
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 use std::future::poll_fn;
 use std::pin::pin;
 use std::sync::Arc;
 use std::task::Poll;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use id_effect::runtime::Never;
-use id_effect::{Deferred, Effect, box_future};
+use id_effect::{Deferred, Effect, RestartIntensity, box_future};
 
 use crate::addr::Addr;
 use crate::exit::ExitReason;
@@ -260,29 +260,17 @@ struct ChildState {
 /// [`SupervisorHandle`] rather than used directly.
 pub struct SupervisorProcess {
   strategy: Strategy,
-  max_restarts: u32,
-  within: Duration,
   children: Vec<ChildState>,
-  restarts: VecDeque<Instant>,
+  /// Sliding-window restart-intensity limiter. The intensity math is owned by
+  /// [`id_effect::RestartIntensity`]; this process only records restart events
+  /// on the injected node clock and escalates when it reports over-budget.
+  intensity: RestartIntensity,
   /// Pids we terminated on purpose — their queued exit messages must not
   /// be mistaken for crashes or parent exits.
   expected_exits: HashSet<Pid>,
 }
 
 impl SupervisorProcess {
-  fn note_restart(&mut self, now: Instant) -> bool {
-    self.restarts.push_back(now);
-    let window_start = now.checked_sub(self.within).unwrap_or(now);
-    while let Some(front) = self.restarts.front() {
-      if *front < window_start {
-        self.restarts.pop_front();
-      } else {
-        break;
-      }
-    }
-    self.restarts.len() <= self.max_restarts as usize
-  }
-
   fn child_index(&self, pid: &Pid) -> Option<usize> {
     self
       .children
@@ -311,7 +299,7 @@ impl SupervisorProcess {
           return true;
         }
         Err(_) => {
-          if !self.note_restart(clock.now()) {
+          if !self.intensity.note(clock.now()) {
             return false;
           }
         }
@@ -386,14 +374,12 @@ impl Process for SupervisorProcess {
       ctx.trap_exit(true);
       let mut state = SupervisorProcess {
         strategy: spec.strategy,
-        max_restarts: spec.max_restarts,
-        within: spec.within,
         children: spec
           .children
           .into_iter()
           .map(|spec| ChildState { spec, pid: None })
           .collect(),
-        restarts: VecDeque::new(),
+        intensity: RestartIntensity::new(spec.max_restarts, spec.within),
         expected_exits: HashSet::new(),
       };
       let node = ctx.node().clone();
@@ -482,7 +468,7 @@ impl Process for SupervisorProcess {
         }
 
         let now = ctx.node().clock().now();
-        if !self.note_restart(now) {
+        if !self.intensity.note(now) {
           return Ok(Next::Stop(ExitReason::Shutdown, self));
         }
 

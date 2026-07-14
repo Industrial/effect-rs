@@ -12,6 +12,9 @@
 //! - **Defects** ([`Cause::Die`]) are not produced by plain `run`; panics inside the interpreter
 //!   remain defects at the runtime boundary (see crate-level safety docs).
 
+use std::collections::VecDeque;
+use std::time::{Duration, Instant};
+
 use crate::concurrency::cancel::CancellationToken;
 use crate::failure::cause::Cause;
 use crate::kernel::{Effect, box_future};
@@ -20,6 +23,69 @@ use crate::runtime::{Never, Runtime, run_fork};
 use crate::scheduling::clock::Clock;
 use crate::scheduling::schedule::{Schedule, ScheduleInput};
 use crate::{FiberHandle, FiberId, succeed};
+
+/// Sliding-window restart-intensity limiter (OTP `max_restarts` within
+/// `within`).
+///
+/// Shared restart-intensity math for supervision trees. On each restart,
+/// [`RestartIntensity::note`] appends `now`, evicts timestamps older than the
+/// window, and returns `true` while the retained count stays at or below
+/// `max_restarts` — the classic BEAM intensity rule.
+///
+/// The type is pure and clock-agnostic: the caller supplies `now` (from any
+/// [`Clock`]), so it is deterministic under a test clock and reusable across
+/// execution models. The OTP-style `id_effect_process` supervisor delegates its
+/// intensity decision here instead of reimplementing the window. The async
+/// [`supervised`] loop deliberately uses a different, total-count policy
+/// ([`SupervisorPolicy::RestartWithLimit`]); a sliding time window and a
+/// total-retry cap are distinct semantics, so this primitive is the shared
+/// piece rather than a single unified policy.
+#[derive(Clone, Debug)]
+pub struct RestartIntensity {
+  max_restarts: u32,
+  within: Duration,
+  events: VecDeque<Instant>,
+}
+
+impl RestartIntensity {
+  /// Build a limiter permitting at most `max_restarts` within `within`.
+  pub fn new(max_restarts: u32, within: Duration) -> Self {
+    Self {
+      max_restarts,
+      within,
+      events: VecDeque::new(),
+    }
+  }
+
+  /// Record a restart at `now` and report whether intensity is still within
+  /// budget.
+  ///
+  /// Returns `false` once the retained restart count inside the sliding window
+  /// exceeds `max_restarts` (the caller should then escalate rather than
+  /// restart again).
+  pub fn note(&mut self, now: Instant) -> bool {
+    self.events.push_back(now);
+    let window_start = now.checked_sub(self.within).unwrap_or(now);
+    while let Some(front) = self.events.front() {
+      if *front < window_start {
+        self.events.pop_front();
+      } else {
+        break;
+      }
+    }
+    self.events.len() <= self.max_restarts as usize
+  }
+
+  /// Maximum restarts permitted within the window.
+  pub fn max_restarts(&self) -> u32 {
+    self.max_restarts
+  }
+
+  /// The sliding intensity window.
+  pub fn within(&self) -> Duration {
+    self.within
+  }
+}
 
 /// Declarative policy for [`supervised`] loops.
 ///
@@ -223,6 +289,41 @@ mod tests {
   use std::sync::Arc;
   use std::sync::atomic::{AtomicUsize, Ordering};
   use std::time::Instant;
+
+  mod restart_intensity {
+    use super::*;
+
+    #[test]
+    fn note_reports_over_budget_within_window() {
+      let mut intensity = RestartIntensity::new(2, std::time::Duration::from_secs(1));
+      let t0 = Instant::now();
+      assert!(intensity.note(t0), "1st restart within budget");
+      assert!(intensity.note(t0), "2nd restart within budget");
+      assert!(!intensity.note(t0), "3rd restart exceeds max_restarts=2");
+    }
+
+    #[test]
+    fn old_events_slide_out_of_window() {
+      let mut intensity = RestartIntensity::new(1, std::time::Duration::from_millis(100));
+      let t0 = Instant::now();
+      assert!(intensity.note(t0), "1st restart within budget");
+      assert!(
+        !intensity.note(t0 + std::time::Duration::from_millis(50)),
+        "2nd restart inside the window exceeds max=1"
+      );
+      assert!(
+        intensity.note(t0 + std::time::Duration::from_millis(500)),
+        "earlier events slid out once the window elapsed"
+      );
+    }
+
+    #[test]
+    fn accessors_report_configuration() {
+      let intensity = RestartIntensity::new(3, std::time::Duration::from_secs(5));
+      assert_eq!(intensity.max_restarts(), 3);
+      assert_eq!(intensity.within(), std::time::Duration::from_secs(5));
+    }
+  }
 
   mod supervisor_attach {
     use super::*;

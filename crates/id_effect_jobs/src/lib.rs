@@ -35,7 +35,7 @@ mod obix_outbox;
 pub use broker::MessageBroker;
 pub use error::{JobError, OutboxError};
 pub use outbox::{OutboxRecord, OutboxTable};
-pub use runner::{JobRecord, JobRunner, JobSpec, JobState};
+pub use runner::{FabricJobRunner, JobRecord, JobRunner, JobSpec, JobState};
 
 #[cfg(feature = "memory")]
 pub use broker::{KafkaBrokerStub, MemoryBroker};

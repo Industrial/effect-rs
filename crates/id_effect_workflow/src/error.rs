@@ -25,4 +25,11 @@ pub enum WorkflowError {
   /// Referenced workflow was never registered.
   #[error("unknown workflow: {0}")]
   UnknownWorkflow(String),
+  /// Remote journal transport failed to deliver or decode a frame.
+  ///
+  /// Raised by [`crate::RemoteStepJournal`] when the underlying
+  /// [`crate::JournalTransport`] cannot complete a request/response round-trip
+  /// (connection lost, malformed frame, server-side decode failure).
+  #[error("journal transport: {0}")]
+  Transport(String),
 }

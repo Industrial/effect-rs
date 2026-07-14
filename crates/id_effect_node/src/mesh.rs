@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use id_effect::{Deferred, run_blocking};
+use id_effect::{ClusterResourcePolicy, Deferred, LoadReport, place, run_blocking};
 use id_effect_process::{ExitReason, MonitorRef, MonitorSink, Pid, ProcessNode};
 
 use crate::envelope::{
@@ -83,6 +83,10 @@ struct MeshInner {
   /// Monitors peers hold on our local processes (reserved for session routing).
   #[allow(dead_code)]
   inbound_monitors: Mutex<HashMap<(u64, Pid), String>>,
+  /// Per-node load telemetry for placement (node name -> (cpu_pct, mem_pct)).
+  /// Populated by a telemetry/gossip loop (or directly in tests); read by
+  /// [`Mesh::load_reports`] to feed [`id_effect::place`].
+  loads: Mutex<HashMap<String, (f32, f32)>>,
 }
 
 /// Distribution façade for one node.
@@ -106,6 +110,7 @@ impl Mesh {
         pending_spawns: Mutex::new(HashMap::new()),
         remote_monitors: Mutex::new(HashMap::new()),
         inbound_monitors: Mutex::new(HashMap::new()),
+        loads: Mutex::new(HashMap::new()),
       }),
     }
   }
@@ -222,6 +227,55 @@ impl Mesh {
       },
     )?;
     self.await_deferred(reply, timeout)
+  }
+
+  /// Record a node's latest load telemetry for placement.
+  ///
+  /// A telemetry/gossip loop calls this for each reachable node (including
+  /// self); tests can call it directly. Utilizations are fractions in
+  /// `[0.0, 1.0]`. The latest report per node wins.
+  pub fn report_load(&self, node: impl Into<String>, cpu_pct: f32, mem_pct: f32) {
+    self
+      .inner
+      .loads
+      .lock()
+      .expect("loads")
+      .insert(node.into(), (cpu_pct, mem_pct));
+  }
+
+  /// Snapshot the recorded per-node load telemetry as [`LoadReport`]s.
+  ///
+  /// Order is unspecified; [`place`] is order-independent (deterministic ties by
+  /// node name), so callers need not sort.
+  pub fn load_reports(&self) -> Vec<LoadReport> {
+    self
+      .inner
+      .loads
+      .lock()
+      .expect("loads")
+      .iter()
+      .map(|(node, (cpu, mem))| LoadReport::new(node.clone(), *cpu, *mem))
+      .collect()
+  }
+
+  /// Spawn a behavior on the node chosen by [`place`] from `reports`/`policy`.
+  ///
+  /// This is the placement-driven counterpart to [`Mesh::remote_spawn`]: instead
+  /// of an explicit node name, the caller supplies load telemetry and a cluster
+  /// policy, and the mesh resolves the target. Returns [`RemoteFault::NoProc`]
+  /// when no reported node satisfies the policy (the caller can then fall back to
+  /// an explicit node).
+  pub fn remote_spawn_placed(
+    &self,
+    reports: &[LoadReport],
+    policy: &ClusterResourcePolicy,
+    behavior: &str,
+    args: Vec<u8>,
+    link_to: Option<&Pid>,
+    timeout: Duration,
+  ) -> Result<Pid, RemoteFault> {
+    let target = place(reports, policy).ok_or(RemoteFault::NoProc)?;
+    self.remote_spawn(&target, behavior, args, link_to, timeout)
   }
 
   /// Remote cast (or local if same node).

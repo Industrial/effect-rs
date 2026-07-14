@@ -104,8 +104,9 @@ pub use compute::{
   install_parallel, place, refresh_adaptive_context,
 };
 pub use concurrency::{
-  CancellationToken, FiberHandle, FiberId, FiberRef, FiberStatus, Supervisor, SupervisorPolicy,
-  check_interrupt, fiber_all, fiber_never, fiber_succeed, interrupt_all, supervised, with_fiber_id,
+  CancellationToken, FiberHandle, FiberId, FiberRef, FiberStatus, RestartIntensity, Supervisor,
+  SupervisorPolicy, check_interrupt, fiber_all, fiber_never, fiber_succeed, interrupt_all,
+  supervised, with_fiber_id,
 };
 pub use coordination::semaphore::Permit;
 pub use coordination::{

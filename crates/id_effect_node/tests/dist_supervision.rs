@@ -52,12 +52,36 @@ fn mesh_pair() -> (Arc<Mesh>, Arc<Mesh>) {
   (a, b)
 }
 
+fn mesh_trio() -> (Arc<Mesh>, Arc<Mesh>, Arc<Mesh>) {
+  let fabric = MeshFabric::new();
+  let make = |name: &str| {
+    let mut r = BehaviorRegistry::new();
+    r.register::<Worker>("worker");
+    Mesh::new(
+      NodeId::fresh(&NodeName::new(name)),
+      ProcessNode::threads(NodeName::new(name)),
+      r,
+    )
+    .with_fabric(fabric.clone())
+  };
+  (make("a@test"), make("b@test"), make("c@test"))
+}
+
 fn spec() -> DistChildSpec {
   DistChildSpec {
     id: "w1".into(),
     behavior: "worker".into(),
     args: postcard::to_allocvec(&()).unwrap(),
     prefer: Some("b@test".into()),
+  }
+}
+
+fn spec_anywhere() -> DistChildSpec {
+  DistChildSpec {
+    id: "w1".into(),
+    behavior: "worker".into(),
+    args: postcard::to_allocvec(&()).unwrap(),
+    prefer: None,
   }
 }
 
@@ -91,6 +115,27 @@ fn takeover_replaces_child_on_node_down() {
   assert_eq!(listed[0].0, "w1", "same logical child id");
   assert_eq!(listed[0].2, "a@test", "took over on surviving node");
   assert_eq!(listed[0].1.node().as_str(), "a@test");
+}
+
+#[test]
+fn placement_picks_least_loaded_node() {
+  let (a, _b, _c) = mesh_trio();
+  // Skewed telemetry: a busy, c mid, b idle (most policy headroom).
+  a.report_load("a@test", 0.9, 0.9);
+  a.report_load("b@test", 0.1, 0.1);
+  a.report_load("c@test", 0.5, 0.5);
+
+  let sup = DistributedSupervisor::new(Arc::clone(&a));
+  // No `prefer`: the unified placement API decides purely on load.
+  let pid = sup.start_child(spec_anywhere(), None).expect("start");
+
+  assert_eq!(
+    pid.node().as_str(),
+    "b@test",
+    "least-loaded eligible node wins under LocalFirst"
+  );
+  assert_eq!(sup.len(), 1);
+  assert_eq!(sup.list()[0].2, "b@test");
 }
 
 #[test]

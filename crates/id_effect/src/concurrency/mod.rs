@@ -48,4 +48,4 @@ pub use fiber_handle::{
 };
 pub use fiber_id::FiberId;
 pub use fiber_ref::{FiberRef, with_fiber_id};
-pub use supervisor::{Supervisor, SupervisorPolicy, supervised};
+pub use supervisor::{RestartIntensity, Supervisor, SupervisorPolicy, supervised};

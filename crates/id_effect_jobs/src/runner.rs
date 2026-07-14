@@ -16,6 +16,17 @@ fn work_profile_label(profile: WorkProfile) -> String {
   }
 }
 
+/// Whether a worker on `node` may run `spec`.
+///
+/// A job is accepted by its `target_node`, or by any node when unrouted
+/// (`target_node == None`); jobs targeted elsewhere are skipped.
+fn accepts(spec: &JobSpec, node: &str) -> bool {
+  match &spec.target_node {
+    Some(target) => target == node,
+    None => true,
+  }
+}
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -84,13 +95,28 @@ pub struct JobRecord {
   pub state: JobState,
 }
 
-/// Optional runner hook for Compute Fabric cluster offload (stub for Kafka/Apalis wiring).
-#[allow(dead_code)]
+/// Runner extension for Compute Fabric cluster offload.
+///
+/// Scale-out jobs produced by [`id_effect::compute::ComputeSupervisor::scale_out_placed`]
+/// carry a [`FabricJobSpec::target_node`] chosen by placement scoring. A
+/// `FabricJobRunner` routes each job to a worker on that node: [`dequeue_for`]
+/// only hands a job to its target node (or to any node when the job is
+/// unrouted), so placement decisions are honored end-to-end.
+///
+/// [`dequeue_for`]: FabricJobRunner::dequeue_for
 pub trait FabricJobRunner: JobRunner {
-  /// Enqueue a fabric-produced scale-out job.
+  /// Enqueue a fabric-produced scale-out job, preserving its `target_node`.
   fn enqueue_fabric(&self, spec: FabricJobSpec) -> Effect<JobRecord, JobError, ()> {
     self.enqueue(JobSpec::from_fabric(spec))
   }
+
+  /// Dequeue the next pending job a worker on `node` may run, marking it
+  /// running. Jobs targeted at a different node are skipped; returns `None`
+  /// when no eligible job is queued.
+  fn dequeue_for(&self, node: &str) -> Effect<Option<JobRecord>, JobError, ()>;
+
+  /// Count pending jobs a worker on `node` would accept (its own + unrouted).
+  fn pending_for(&self, node: &str) -> Effect<usize, JobError, ()>;
 }
 
 /// Background job queue abstraction.
@@ -214,6 +240,35 @@ impl JobRunner for MemoryJobRunner {
 }
 
 #[cfg(feature = "memory")]
+impl FabricJobRunner for MemoryJobRunner {
+  fn dequeue_for(&self, node: &str) -> Effect<Option<JobRecord>, JobError, ()> {
+    let queue = Arc::clone(&self.inner.queue);
+    let running = Arc::clone(&self.inner.running);
+    let node = node.to_owned();
+    Effect::new(move |_r| {
+      let mut guard = queue.lock().map_err(|e| JobError::Lock(e.to_string()))?;
+      let Some(pos) = guard.iter().position(|r| accepts(&r.spec, &node)) else {
+        return Ok(None);
+      };
+      let mut record = guard.remove(pos).expect("position from iter is valid");
+      record.state = JobState::Running;
+      let mut run_guard = running.lock().map_err(|e| JobError::Lock(e.to_string()))?;
+      run_guard.insert(record.spec.id.clone(), record.clone());
+      Ok(Some(record))
+    })
+  }
+
+  fn pending_for(&self, node: &str) -> Effect<usize, JobError, ()> {
+    let queue = Arc::clone(&self.inner.queue);
+    let node = node.to_owned();
+    Effect::new(move |_r| {
+      let guard = queue.lock().map_err(|e| JobError::Lock(e.to_string()))?;
+      Ok(guard.iter().filter(|r| accepts(&r.spec, &node)).count())
+    })
+  }
+}
+
+#[cfg(feature = "memory")]
 /// Drain up to `limit` pending jobs, running `handler` for each.
 ///
 /// Returns the number of jobs processed. Handler failures mark the job failed but do not
@@ -330,5 +385,115 @@ mod tests {
     let running = run_blocking(runner.dequeue(), ()).unwrap().unwrap();
     run_blocking(runner.fail(&running.spec.id), ()).unwrap();
     assert!(run_blocking(runner.complete(&running.spec.id), ()).is_err());
+  }
+
+  #[test]
+  fn fabric_job_routes_to_target_node() {
+    let runner = MemoryJobRunner::new();
+    let spec = FabricJobSpec {
+      name: "heavy".into(),
+      payload: vec![1, 2, 3],
+      work_profile: WorkProfile::CpuIntensive,
+      target_node: Some("b@test".into()),
+    };
+    let rec = run_blocking(runner.enqueue_fabric(spec), ()).unwrap();
+    // from_fabric round-trips work_profile + target_node into the enqueue path.
+    assert_eq!(rec.spec.target_node.as_deref(), Some("b@test"));
+    assert_eq!(rec.spec.work_profile.as_deref(), Some("cpu_intensive"));
+
+    // A worker on another node must not steal a b-targeted job.
+    assert!(
+      run_blocking(runner.dequeue_for("a@test"), ())
+        .unwrap()
+        .is_none()
+    );
+    assert_eq!(run_blocking(runner.pending_for("a@test"), ()).unwrap(), 0);
+    assert_eq!(run_blocking(runner.pending_for("b@test"), ()).unwrap(), 1);
+
+    // The intended node drains it.
+    let got = run_blocking(runner.dequeue_for("b@test"), ())
+      .unwrap()
+      .unwrap();
+    assert_eq!(got.spec.name, "heavy");
+    assert_eq!(got.spec.target_node.as_deref(), Some("b@test"));
+    assert_eq!(got.state, JobState::Running);
+  }
+
+  #[test]
+  fn unrouted_fabric_job_taken_by_any_node() {
+    let runner = MemoryJobRunner::new();
+    let spec = FabricJobSpec {
+      name: "any".into(),
+      payload: vec![],
+      work_profile: WorkProfile::Mixed,
+      target_node: None,
+    };
+    run_blocking(runner.enqueue_fabric(spec), ()).unwrap();
+    // Unrouted work is fair game for any node.
+    let got = run_blocking(runner.dequeue_for("z@test"), ())
+      .unwrap()
+      .unwrap();
+    assert_eq!(got.spec.name, "any");
+  }
+
+  #[test]
+  fn scale_out_placed_target_is_consumed_by_runner() {
+    use id_effect::compute::{
+      AdmissionController, ClusterResourcePolicy, ComputeSupervisor, MockTelemetry, NodeCandidate,
+      ResourcePolicy, TelemetrySnapshot,
+    };
+
+    // Two candidates; b has far more headroom, so placement chooses it.
+    let policy = ResourcePolicy::memory_cap_max_cpu(0.95);
+    let cluster = ClusterResourcePolicy::local_first(policy.clone());
+    let candidates = vec![
+      NodeCandidate {
+        name: "a@test".into(),
+        snapshot: TelemetrySnapshot {
+          cpu_pct: 0.9,
+          mem_pct: 0.9,
+        },
+      },
+      NodeCandidate {
+        name: "b@test".into(),
+        snapshot: TelemetrySnapshot {
+          cpu_pct: 0.1,
+          mem_pct: 0.1,
+        },
+      },
+    ];
+    let sup = ComputeSupervisor::new(
+      policy,
+      MockTelemetry::new(0.9, 0.9),
+      Arc::new(AdmissionController::new(1, 4)),
+    );
+
+    let job = sup.scale_out_placed(
+      "heavy",
+      b"payload".to_vec(),
+      WorkProfile::CpuIntensive,
+      &cluster,
+      &candidates,
+    );
+    assert_eq!(
+      job.target_node.as_deref(),
+      Some("b@test"),
+      "placement selected the least-loaded node"
+    );
+
+    // The placement decision is consumed by the runner: a-worker skips it,
+    // b-worker runs it.
+    let runner = MemoryJobRunner::new();
+    run_blocking(runner.enqueue_fabric(job), ()).unwrap();
+    assert!(
+      run_blocking(runner.dequeue_for("a@test"), ())
+        .unwrap()
+        .is_none()
+    );
+    let got = run_blocking(runner.dequeue_for("b@test"), ())
+      .unwrap()
+      .unwrap();
+    assert_eq!(got.spec.name, "heavy");
+    assert_eq!(got.spec.target_node.as_deref(), Some("b@test"));
   }
 }
