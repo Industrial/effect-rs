@@ -9,6 +9,7 @@ mod capability_attr;
 mod derive_fsm;
 mod derive_optics;
 mod derive_schema_parser;
+mod distributed_behavior;
 mod effect_data;
 mod effect_graph;
 mod effect_tagged;
@@ -98,3 +99,17 @@ pub fn derive_fsm(input: TokenStream) -> TokenStream {
 pub fn derive_schema_parser(input: TokenStream) -> TokenStream {
   derive_schema_parser::derive_schema_parser(input)
 }
+
+/// Mark a process struct as a remotely spawnable behavior.
+///
+/// ```ignore
+/// #[distributed_behavior("counter")]
+/// struct Counter { ... }
+/// // Counter::BEHAVIOR_NAME == "counter"
+/// // Counter::register_behavior(&mut registry);
+/// ```
+#[proc_macro_attribute]
+pub fn distributed_behavior(attr: TokenStream, item: TokenStream) -> TokenStream {
+  distributed_behavior::expand(attr, item)
+}
+

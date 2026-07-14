@@ -12,6 +12,8 @@ members = [
   "crates/id_effect_optics",
   "crates/id_effect_platform",
   "crates/id_effect_proc_macro",
+  "crates/id_effect_process",
+  "crates/id_effect_node",
   "crates/id_effect_resilience",
   "crates/id_effect_rpc",
   "crates/id_effect_sql",

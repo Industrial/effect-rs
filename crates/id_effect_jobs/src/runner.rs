@@ -46,6 +46,9 @@ pub struct JobSpec {
   /// Optional Compute Fabric work profile label for cluster placement.
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub work_profile: Option<String>,
+  /// Optional target node from placement scoring.
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub target_node: Option<String>,
 }
 
 impl JobSpec {
@@ -56,6 +59,7 @@ impl JobSpec {
       name: name.into(),
       payload: payload.into(),
       work_profile: None,
+      target_node: None,
     }
   }
 
@@ -66,6 +70,7 @@ impl JobSpec {
       name: spec.name,
       payload: spec.payload,
       work_profile: Some(work_profile_label(spec.work_profile)),
+      target_node: spec.target_node,
     }
   }
 }

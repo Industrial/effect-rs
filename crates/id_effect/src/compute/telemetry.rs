@@ -84,6 +84,49 @@ impl TelemetryEngine for MockTelemetry {
   }
 }
 
+/// Cluster-wide telemetry table (gossip-piggybacked snapshots).
+#[derive(Debug, Default)]
+pub struct ClusterTelemetry {
+  nodes: Mutex<std::collections::HashMap<String, TelemetrySnapshot>>,
+}
+
+impl ClusterTelemetry {
+  /// Empty peer table.
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  /// Merge gossiped remote snapshots; last writer for same node wins.
+  pub fn ingest(&self, remote: &[(String, TelemetrySnapshot)]) {
+    let mut map = self.nodes.lock().expect("cluster tel");
+    for (name, snap) in remote {
+      map.insert(name.clone(), *snap);
+    }
+  }
+
+  /// Build placement candidates from known peers plus local.
+  pub fn candidates(
+    &self,
+    local_name: &str,
+    local: TelemetrySnapshot,
+  ) -> Vec<crate::compute::NodeCandidate> {
+    let mut out = vec![crate::compute::NodeCandidate {
+      name: local_name.to_string(),
+      snapshot: local,
+    }];
+    let map = self.nodes.lock().expect("cluster tel");
+    for (name, snap) in map.iter() {
+      if name != local_name {
+        out.push(crate::compute::NodeCandidate {
+          name: name.clone(),
+          snapshot: *snap,
+        });
+      }
+    }
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

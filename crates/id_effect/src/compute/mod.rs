@@ -22,7 +22,10 @@ pub use adaptive::{
   refresh_adaptive_context,
 };
 pub use admission::AdmissionController;
-pub use cluster::{ClusterResourcePolicy, FabricJobSpec, PlacementMode};
+pub use cluster::{
+  ClusterResourcePolicy, FabricJobSpec, NodeCandidate, PlacementMode, pick_placement,
+  score_candidate,
+};
 pub(crate) use dispatch::parallel_if_profitable;
 pub use fabric::ComputeFabric;
 pub use fiber_pool::FiberPool;
@@ -30,4 +33,4 @@ pub use policy::{MetricMode, MetricPolicy, RebalanceStrategy, ResourcePolicy, Wo
 pub use rayon_pool::{configure_rayon_threads, install_parallel};
 pub use spread::CpuSpreadBucket;
 pub use supervisor::ComputeSupervisor;
-pub use telemetry::{MockTelemetry, SysinfoTelemetry, TelemetryEngine, TelemetrySnapshot};
+pub use telemetry::{ClusterTelemetry, MockTelemetry, SysinfoTelemetry, TelemetryEngine, TelemetrySnapshot};

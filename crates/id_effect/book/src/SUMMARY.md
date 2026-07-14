@@ -144,6 +144,13 @@
 - [DX, generators, and deploy](./part6/ch34-00-dx-ship.md)
 - [AI and MCP (`id_effect_ai`)](./part6/ch35-00-ai.md)
 
+# Part VII: Process Mesh
+
+- [Process Mesh overview](./part7/ch36-00-process-mesh.md)
+- [Processes and supervision](./part7/ch37-00-processes-supervision.md)
+- [Distribution and membership](./part7/ch38-00-distribution.md)
+- [Cluster groups and takeover](./part7/ch39-00-cluster-supervision.md)
+
 # Appendices
 
 - [API Quick Reference](./appendix-a-api-reference.md)

@@ -960,6 +960,11 @@ where
   /// Maps with an effect per element using Fabric admission-bounded concurrency per chunk.
   ///
   /// Processes one upstream chunk at a time (no unbounded prefetch). Output order matches stream order.
+  ///
+  /// **Cluster dispatch:** wrap each element in an `Effect` that casts/calls a process-group
+  /// member (see `id_effect_node::fanout_cast` + `ProcessGroups`) or a pinned remote pid from
+  /// [`crate::compute::pick_placement`]. Concurrency stays admission-bounded locally;
+  /// cross-node backpressure is the remote mailbox full / `RemoteFault::Timeout` path.
   #[inline]
   pub fn map_effect<B, E2, F>(self, f: F) -> Stream<B, Or<E, E2>, R>
   where
