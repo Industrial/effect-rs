@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_config"
-version = "0.4.0"
-edition = "2024"
-license = "CC-BY-SA-4.0"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Effect.ts-style ConfigProvider + Figment/serde layers for the workspace `effect` crate"
-repository = "https://github.com/Industrial/id_effect"
+repository.workspace = true
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -30,8 +30,8 @@ dotenv = ["dep:dotenvy"]
 name = "id_effect_config"
 
 [dependencies]
-id_effect = { path = "../id_effect", version = "0.4.0" }
-id_effect_logger = { path = "../id_effect_logger", version = "0.4.0" }
+id_effect = { path = "../id_effect", version = "0.5.0" }
+id_effect_logger = { path = "../id_effect_logger", version = "0.5.0" }
 # Floor for figment's pear dep: 0.2.0 does not build on current Rust (fmt::Write on InlinableString).
 pear = "0.2.9"
 figment = { version = "0.10.19", default-features = false }

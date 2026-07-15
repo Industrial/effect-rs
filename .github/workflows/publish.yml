@@ -31,7 +31,8 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             TAG="${GITHUB_REF#refs/tags/v}"
           else
-            TAG=$(grep -m1 '^version = ' crates/id_effect_proc_macro/Cargo.toml | sed 's/^version = "\(.*\)"/\1/')
+            # Members inherit version.workspace = true, so read the workspace root.
+            TAG=$(grep -m1 '^version = ' Cargo.toml | sed 's/^version = "\(.*\)"/\1/')
           fi
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
           echo "Publishing version: $TAG"
@@ -39,27 +40,31 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           MISMATCH=0
-          for toml in crates/id_effect_*/Cargo.toml; do
+          # The workspace root is the single source of truth for the version.
+          WS_VER=$(grep -m1 '^version = ' Cargo.toml | sed 's/^version = "\(.*\)"/\1/')
+          if [ "$WS_VER" != "$VERSION" ]; then
+            echo "MISMATCH: [workspace.package] version $WS_VER, expected $VERSION"
+            MISMATCH=1
+          fi
+          # Every publishable member must inherit version.workspace = true so the
+          # workspace bump propagates atomically. Excluded crates are skipped.
+          for toml in crates/*/Cargo.toml; do
             CRATE=$(grep -m1 '^name = ' "$toml" | sed 's/^name = "\(.*\)"/\1/')
             if [ "$CRATE" = "id_effect_lint" ]; then
               continue
             fi
-            CRATE_VER=$(grep -m1 '^version = ' "$toml" | sed 's/^version = "\(.*\)"/\1/')
-            if [ "$CRATE_VER" != "$VERSION" ]; then
-              echo "MISMATCH: $toml ($CRATE) has version $CRATE_VER, expected $VERSION"
-              MISMATCH=1
+            if grep -q '^version.workspace = true' "$toml"; then
+              continue
             fi
-          done
-          CORE_VER=$(grep -m1 '^version = ' crates/id_effect/Cargo.toml | sed 's/^version = "\(.*\)"/\1/')
-          if [ "$CORE_VER" != "$VERSION" ]; then
-            echo "MISMATCH: crates/id_effect/Cargo.toml has version $CORE_VER, expected $VERSION"
+            CRATE_VER=$(grep -m1 '^version = ' "$toml" | sed 's/^version = "\(.*\)"/\1/')
+            echo "MISMATCH: $toml ($CRATE) does not inherit version.workspace (found: ${CRATE_VER:-none})"
             MISMATCH=1
-          fi
+          done
           if [ "$MISMATCH" -eq 1 ]; then
             echo "Version mismatch detected — aborting publish."
             exit 1
           fi
-          echo "All publishable crates at $VERSION"
+          echo "All publishable crates inherit workspace version $VERSION"
   test:
     name: Pre-publish tests
     runs-on: ubuntu-latest
@@ -214,6 +219,13 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: .github/scripts/publish-crate.sh id_effect_tokio
+      - name: Wait for crates.io index
+        run: sleep 20
+      - name: Publish id_effect_process
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: .github/scripts/publish-crate.sh id_effect_process
   publish-level-3:
     name: Publish level-3 (config, sql_pg, tower)
     runs-on: ubuntu-latest
@@ -264,6 +276,13 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: .github/scripts/publish-crate.sh id_effect_ai
+      - name: Wait for crates.io index
+        run: sleep 20
+      - name: Publish id_effect_node
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: .github/scripts/publish-crate.sh id_effect_node
       - name: Wait for crates.io index
         run: sleep 20
       - name: Publish id_effect_axum

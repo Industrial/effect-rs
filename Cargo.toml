@@ -30,6 +30,12 @@ members = [
   "examples/cli-minimal",
 ]
 
+[workspace.package]
+version = "0.5.0"
+edition = "2024"
+license = "CC-BY-SA-4.0"
+repository = "https://github.com/Industrial/id_effect"
+
 # More stable / comparable Criterion numbers than default bench profile (inherits release).
 [profile.bench]
 lto = "thin"

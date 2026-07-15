@@ -1,10 +1,10 @@
 [package]
 name = "id_effect"
-version = "0.4.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "Effect<A, E, R> (sync + async), capability DI, pipe — interpreter-style, no bundled executor"
-license = "CC-BY-SA-4.0"
-repository = "https://github.com/Industrial/id_effect"
+license.workspace = true
+repository.workspace = true
 
 # Examples: numbered curriculum `examples/NNN_slug.rs` (auto-discovered). Tokio integration:
 # `id_effect_tokio` (`106_tokio_runtime` … `109_tokio_end_to_end`). See `examples/README.md`.
@@ -37,8 +37,8 @@ algebra = []
 
 [dependencies]
 futures = { version = "0.3", default-features = false, features = ["std"] }
-id_effect_macro = { path = "../id_effect_macro", version = "0.4.0" }
-id_effect_proc_macro = { path = "../id_effect_proc_macro", version = "0.4.0" }
+id_effect_macro = { path = "../id_effect_macro", version = "0.5.0" }
+id_effect_proc_macro = { path = "../id_effect_proc_macro", version = "0.5.0" }
 flume = "0.12"
 im = "15"
 # 0.2.0 lacks APIs we use (`SignedDuration::from_nanos_i128`, `Error::from_args`).

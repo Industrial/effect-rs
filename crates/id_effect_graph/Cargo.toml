@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_graph"
-version = "0.4.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "Directed acyclic graphs and topological sorting for id_effect programs"
-license = "CC-BY-SA-4.0"
-repository = "https://github.com/Industrial/id_effect"
+license.workspace = true
+repository.workspace = true
 readme = "README.md"
 keywords = ["dag", "graph", "topological-sort", "dependencies"]
 categories = ["data-structures"]

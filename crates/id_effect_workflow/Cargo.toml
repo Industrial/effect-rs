@@ -1,10 +1,10 @@
 [package]
 name = "id_effect_workflow"
-version = "0.4.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "Durable step log with SQLite (memory) or duroxide-pg (production) resume semantics"
-license = "CC-BY-SA-4.0"
-repository = "https://github.com/Industrial/id_effect"
+license.workspace = true
+repository.workspace = true
 readme = "README.md"
 keywords = ["effect", "workflow", "durable", "sqlite", "saga"]
 categories = ["database"]
@@ -14,7 +14,7 @@ unsafe_code = "forbid"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [dependencies]
-id_effect = { path = "../id_effect", version = "0.4.0" }
+id_effect = { path = "../id_effect", version = "0.5.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
@@ -57,7 +57,7 @@ optional = true
 
 [dependencies.id_effect_sql_pg]
 path = "../id_effect_sql_pg"
-version = "0.4.0"
+version = "0.5.0"
 optional = true
 
 [dependencies.tokio]
