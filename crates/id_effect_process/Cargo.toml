@@ -5,6 +5,8 @@ edition.workspace = true
 description = "BEAM/OTP-style processes, links, monitors, and supervision trees for id_effect"
 license.workspace = true
 repository.workspace = true
+keywords = ["effect", "actor", "supervision", "otp", "process"]
+categories = ["asynchronous", "concurrency"]
 
 [lints.rust]
 unsafe_code = "forbid"

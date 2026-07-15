@@ -1,16 +1,68 @@
 # Changelog
 
-## Unreleased — Cap service names
+## 0.5.0 — Process Mesh & distributed runtime
+
+Semver-minor release introducing the **Process Mesh**: a BEAM/OTP-style local
+process runtime (`id_effect_process`) and a distribution layer (`id_effect_node`)
+for node identity, membership, remote processes, and distributed supervision.
+Existing cluster/supervision/jobs/workflow stubs are wired into the mesh behind a
+single placement scorer. See [ADR 0009](docs/adrs/0009-process-mesh.md) and
+[book Part VII](crates/id_effect/book/src/part7/ch36-00-process-mesh.md).
+
+### Added
+
+- **New crate `id_effect_process`** — typed mailboxes, GenServer-shaped behaviors,
+  links, monitors, `trap_exit`, exit-signal propagation, and multi-strategy OTP
+  supervision trees, deterministic under `TestClock`.
+- **New crate `id_effect_node`** — node identity, cookie-authenticated handshake,
+  pluggable transports (InMemory/TCP/QUIC), SWIM membership, remote processes,
+  process groups, and distributed supervision.
+- **Unified placement API** — `id_effect::place` is the single pure entry point,
+  fed by `LoadReport` (mesh telemetry DTO) with a `NodeCandidate` adapter. New
+  `PlacementMode::RoundRobin` (deterministic rotation) joins `Affinity`,
+  `LocalFirst`, and `Spread`.
+- **Placement-aware distribution** — `mesh` gains `report_load` / `load_reports` /
+  `remote_spawn_placed`; `DistributedSupervisor` places children via
+  `id_effect::place`, honoring `spec.prefer` and excluding downed nodes on takeover.
+- **Node-aware jobs** — `FabricJobRunner` honors `JobSpec.target_node` via
+  `dequeue_for` / `pending_for`; `ComputeSupervisor::scale_out_placed` targets flow
+  through to the runner.
+- **Distributed workflow journal** — `RemoteStepJournal` backs `DistributedStepJournal`
+  over a `JournalTransport` (`JournalServer` + `LoopbackTransport`) with a wire
+  protocol and `WorkflowError::Transport`. `NetworkJournalStub` is retained as a
+  test double.
+- **`PgAdvisoryLease`** (feature `pg`) — `SingletonLease` backed by Postgres
+  session-scoped advisory locks on a dedicated worker connection (CP production
+  path). `MemoryLease` retained for tests.
+- **`concurrency::RestartIntensity`** — shared sliding-window restart-intensity
+  primitive (distinct from `RestartWithLimit`'s total-count cap).
+- Examples: `132_distributed_supervisor_failover.rs`, `133_cluster_stream_fanout.rs`.
 
 ### Changed
 
 - Capability API uses **service type names** directly: `caps!(Counter)`, `require!(Counter)`, `#[provides(Counter)]`.
 - `Cap<T>` replaces generated `*Key` types; `#[capability]` is a no-op (removed from public flow).
 - Trait-backed services use type aliases (`HttpClientService`, `ConfigProviderService`, …).
+- `PlacementMode::LocalFirst` and `Spread` now diverge — previously they scored
+  identically. `LocalFirst` prefers the least-loaded node; `Spread` picks lowest raw load.
+- `id_effect_process` OTP supervisor delegates restart-intensity accounting to the
+  shared `concurrency::RestartIntensity` primitive (behavior preserved).
+- **Workspace versioning** — the root manifest owns `[workspace.package]`
+  (version/edition/license/repository); every publishable member inherits via
+  `version.workspace = true`, so future bumps propagate atomically.
 
 ### Removed
 
 - Public `*Key` types and `define_capability!`.
+
+### Version alignment
+
+| Crate | Version |
+|-------|---------|
+| `id_effect` | **0.5.0** |
+| `id_effect_process` | **0.5.0** (new) |
+| `id_effect_node` | **0.5.0** (new) |
+| workspace adapters | **0.5.0** |
 
 ## 0.4.0 — Implicit parallelism (breaking)
 

@@ -4,6 +4,8 @@
 //! SWIM membership, remote processes, process groups, and distributed
 //! supervision (ADR 0009).
 
+#![deny(missing_docs)]
+
 pub mod control;
 pub mod discovery;
 pub mod dist_supervisor;

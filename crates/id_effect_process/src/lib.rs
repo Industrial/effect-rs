@@ -29,6 +29,8 @@
 //!   boundary (handlers that never yield cannot be preempted — the same
 //!   caveat as a NIF in BEAM).
 
+#![deny(missing_docs)]
+
 pub mod addr;
 pub mod cell;
 pub mod clock_util;

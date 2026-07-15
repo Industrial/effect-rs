@@ -5,6 +5,8 @@ edition.workspace = true
 description = "Distribution layer for the id_effect Process Mesh: node identity, cookie handshake, and pluggable transports (InMemory/TCP/QUIC)"
 license.workspace = true
 repository.workspace = true
+keywords = ["effect", "distributed", "cluster", "mesh", "actor"]
+categories = ["asynchronous", "network-programming"]
 
 [lints.rust]
 unsafe_code = "forbid"

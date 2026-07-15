@@ -79,11 +79,20 @@ Example: `122_compute_fabric_effect_parallel.rs` (`Stream::map_effect` under adm
 
 ## Cluster
 
-When local Fabric saturates, `RebalanceStrategy::ScaleOut` builds a [`FabricJobSpec`](../../src/compute/cluster.rs) via [`ComputeSupervisor::scale_out`](../../src/compute/cluster.rs). Convert with `id_effect_jobs::JobSpec::from_fabric` and enqueue on a [`FabricJobRunner`](../../id_effect_jobs/src/runner.rs). Durable cross-node steps hook through [`DistributedStepJournal`](../../id_effect_workflow/src/journal.rs) (stub).
+When local Fabric saturates, `RebalanceStrategy::ScaleOut` builds a [`FabricJobSpec`](../../src/compute/cluster.rs) via [`ComputeSupervisor::scale_out`](../../src/compute/cluster.rs) (or `scale_out_placed`, which records a `target_node`). Convert with `id_effect_jobs::JobSpec::from_fabric` and enqueue on a [`FabricJobRunner`](../../id_effect_jobs/src/runner.rs), which routes each job to its `target_node` via `dequeue_for` / `pending_for`. Durable cross-node steps hook through [`DistributedStepJournal`](../../id_effect_workflow/src/journal.rs), backed by a real `RemoteStepJournal` over a `JournalTransport` (0.5.0).
 
 Example: `123_compute_fabric_cluster.rs` (two-node offload with `MemoryJobRunner`).
 
-[`ClusterResourcePolicy`](../../src/compute/cluster.rs) combines global and per-node caps with [`PlacementMode`](../../src/compute/cluster.rs) (`LocalFirst`, `Spread`, `Affinity`, `RoundRobin`).
+[`ClusterResourcePolicy`](../../src/compute/cluster.rs) combines global and per-node caps with [`PlacementMode`](../../src/compute/cluster.rs). All placement decisions flow through one pure entry point, [`place`](../../src/compute/cluster.rs), fed by [`LoadReport`](../../src/compute/cluster.rs) telemetry (adapted to `NodeCandidate`):
+
+| `PlacementMode` | Chooses |
+|-----------------|---------|
+| `Affinity` | an explicitly preferred node when eligible |
+| `LocalFirst` | the least-loaded node (headroom-weighted) |
+| `Spread` | the node with the lowest raw load |
+| `RoundRobin` | the next node in a deterministic rotation |
+
+As of 0.5.0 `LocalFirst` and `Spread` diverge — previously they scored identically. The distributed supervisor, mesh remote-spawn, and jobs offload all consume `place`.
 
 ## Further reading
 
