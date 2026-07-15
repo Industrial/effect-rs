@@ -23,6 +23,8 @@ projects:
   id_effect_fsm: crates/id_effect_fsm
   id_effect_events: crates/id_effect_events
   id_effect_graph: crates/id_effect_graph
+  id_effect_process: crates/id_effect_process
+  id_effect_node: crates/id_effect_node
 vcs:
   defaultBranch: main
   provider: github

@@ -1,0 +1,83 @@
+# https://moonrepo.dev/docs/config/project
+language: 'rust'
+layer: 'library'
+tasks:
+  check:
+    deps: ['effect:ci-format', '^:check']
+    command:
+      - cargo
+      - check
+      - -p
+      - id_effect_node
+      - --all-targets
+      - --all-features
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  clippy:
+    deps: ['effect:ci-format', '^:clippy', '~:check']
+    command:
+      - cargo
+      - clippy
+      - -p
+      - id_effect_node
+      - --all-targets
+      - --all-features
+      - --
+      - -D
+      - warnings
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  lint:
+    description: 'Alias for ~:clippy (format-gated)'
+    deps: ['effect:ci-format', '~:clippy']
+    command: 'bash'
+    args: ['-c', ':']
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  test:
+    deps: ['effect:ci-format', '^:test', '~:clippy']
+    command:
+      - cargo
+      - nextest
+      - run
+      - -p
+      - id_effect_node
+      - --all-features
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
+  build:
+    deps: ['effect:ci-format', '^:build', '~:test']
+    command:
+      - cargo
+      - build
+      - -p
+      - id_effect_node
+      - --all-targets
+      - --all-features
+    inputs:
+      - 'Cargo.toml'
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'examples/**/*.rs'
+    options:
+      cache: true
+      outputStyle: buffer-only-failure
