@@ -52,7 +52,7 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: cargo-nextest
       - name: Install moon
@@ -89,7 +89,7 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2
       - name: Install cargo-llvm-cov and cargo-nextest
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: cargo-llvm-cov,cargo-nextest
       - name: Generate coverage (lcov)
