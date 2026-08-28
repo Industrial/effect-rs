@@ -37,7 +37,7 @@ duroxide = [
 ]
 
 [dependencies.rusqlite]
-version = "0.32"
+version = "0.40"
 features = ["bundled"]
 optional = true
 
